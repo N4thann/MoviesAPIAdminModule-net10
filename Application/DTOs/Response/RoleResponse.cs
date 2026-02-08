@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Response
 {
-    public record RoleResponse(string Id, string Name);
+    public sealed record RoleResponse(string Id, string Name);
 }

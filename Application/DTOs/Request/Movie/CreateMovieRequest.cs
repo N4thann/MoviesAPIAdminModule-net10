@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Request.Movie
 {
-    public record class CreateMovieRequest(
+    public sealed record CreateMovieRequest(
         string Title,
         string OriginalTitle,
         string Synopsis,

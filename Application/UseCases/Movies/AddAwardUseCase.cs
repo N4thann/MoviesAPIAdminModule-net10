@@ -3,6 +3,7 @@ using Application.Commands.Movie;
 using Application.Interfaces.Mediator;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Interfaces;
+using Domain.SmartEnums;
 using Domain.ValueObjects;
 
 namespace Application.UseCases.Movies

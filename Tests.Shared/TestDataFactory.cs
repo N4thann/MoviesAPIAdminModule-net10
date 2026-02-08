@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.SeedWork.Core;
+using Domain.SmartEnums;
 using Domain.ValueObjects;
 
 namespace Tests.Shared

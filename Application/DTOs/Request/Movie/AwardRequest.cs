@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Request.Movie
 {
-    public record class AwardRequest(
+    public sealed record AwardRequest(
          int CategoryId,   
          int InstitutionId,
          int Year

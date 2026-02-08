@@ -30,6 +30,7 @@ namespace Domain.ValueObjects
             if (!string.IsNullOrEmpty(altText))
             {
                 var validation3 = Validate.MaxLength(altText, 200, nameof(altText));
+
                 if (validation3.IsFailure)
                     return Result<MovieImage>.AsFailure(validation3.Failure!);
             }

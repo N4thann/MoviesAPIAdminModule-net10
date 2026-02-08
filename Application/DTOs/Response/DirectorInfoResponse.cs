@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Response
 {
-    public record class DirectorInfoResponse(
+    public sealed record DirectorInfoResponse(
         Guid Id,
         string Name,
         DateTime BirthDate,

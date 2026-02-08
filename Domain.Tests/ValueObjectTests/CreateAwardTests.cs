@@ -1,4 +1,5 @@
-﻿using Domain.ValueObjects;
+﻿using Domain.SmartEnums;
+using Domain.ValueObjects;
 using FluentAssertions;
 
 namespace Domain.Tests.ValueObjectTests

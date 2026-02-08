@@ -31,7 +31,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Cria um novo estúdio")]
-        [OpenApiTag("Roles Commands")]
+        [OpenApiTag("Studio")]
         public async Task<IActionResult> CreateStudio([FromBody] CreateStudioRequest request, CancellationToken cancellationToken)
         {
             var command = new CreateStudioCommand(
@@ -59,7 +59,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Obtém um estúdio por ID")]
-        [OpenApiTag("Roles Queries")]
+        [OpenApiTag("Studio")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken) 
         {
             var query = new GetStudioByIdQuery(id);
@@ -78,7 +78,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Lista todos os estúdios")]
-        [OpenApiTag("Roles Queries")]
+        [OpenApiTag("Studio")]
         public async Task<IActionResult> GetAllPagination([FromQuery] StudioParametersRequest parameters, CancellationToken cancellationToken)
         {
             var query = new ListStudiosQuery(parameters);
@@ -110,7 +110,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Lista estúdios com filtros e paginação")]
-        [OpenApiTag("Roles Queries")]
+        [OpenApiTag("Studio")]
         public async Task<IActionResult> GetFilteredStudios([FromQuery] StudioFilterRequest request, CancellationToken cancellationToken)
         {
             var query = new StudioFilterQuery(
@@ -179,7 +179,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Exclui um estúdio por ID")]
-        [OpenApiTag("Roles Commands")]
+        [OpenApiTag("Studio")]
         public async Task<IActionResult> DeleteStudio(Guid id, CancellationToken cancellationToken)
         {
             var command = new DeleteStudioCommand(id);

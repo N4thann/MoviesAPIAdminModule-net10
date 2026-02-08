@@ -1,4 +1,4 @@
 ﻿namespace Application.DTOs.Authentication
 {
-    public record CreateRoleRequest(string RoleName);
+    public sealed record CreateRoleRequest(string RoleName);
 }

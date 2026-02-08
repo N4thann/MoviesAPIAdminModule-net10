@@ -55,9 +55,6 @@ namespace Domain.ValueObjects
             return $"{AverageValue:F1}/{MaxValue} ({VotesCount} votes)";
         }
 
-        public static Rating CreateEmpty(decimal maxValue = 10)
-        {
-            return new Rating(0, 0, maxValue);
-        }
+        public static Rating CreateEmpty(decimal maxValue = 10) => new Rating(0, 0, maxValue);
     }
 }

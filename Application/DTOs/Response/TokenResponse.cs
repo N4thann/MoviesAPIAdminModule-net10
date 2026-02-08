@@ -5,7 +5,7 @@ namespace Application.DTOs.Response
     /// <summary>
     /// Representa a resposta enviada ao cliente após um login bem-sucedido ou para o endpoint de Refresh Token.
     /// </summary>
-    public record class TokenResponse(
+    public sealed record TokenResponse(
         [property: JsonPropertyName("accessToken")]
         string AccessToken,
 

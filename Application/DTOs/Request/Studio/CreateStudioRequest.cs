@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Request.Studio
 {
-    public record class CreateStudioRequest(
+    public sealed record CreateStudioRequest(
         string Name,
         string CountryName,
         string CountryCode,

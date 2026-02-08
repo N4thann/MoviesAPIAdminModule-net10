@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Response
 {
-    public record class StudioInfoResponse(
+    public sealed record StudioInfoResponse(
         Guid Id,
         string Name,
         string CountryName,

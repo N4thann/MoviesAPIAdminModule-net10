@@ -95,13 +95,12 @@ namespace Domain.Entities
         public Result<bool> UpdateCountry(Country country)
         {
             var validationResult = Validate.NotNull(country, nameof(country));
+
             if (validationResult.IsFailure)
-            {
                 return Result<bool>.AsFailure(validationResult.Failure!);
-            }
 
             Country = country;
-            UpdatedAt = DateTime.UtcNow; // Corrigido para UtcNow para consistência
+            UpdatedAt = DateTime.UtcNow;
 
             return Result<bool>.AsSuccess(true);
         }
@@ -112,14 +111,15 @@ namespace Domain.Entities
         {
             var today = DateTime.Today;
             var age = today.Year - birthDate.Year;
-            if (birthDate.Date > today.AddYears(-age)) age--;
+
+            if (birthDate.Date > today.AddYears(-age)) 
+                age--;
+
             return age;
         }
 
-        public override string ToString()
-        {
-            return $"{Name} ({Age} anos) - {Country.Name}";
-        }
+        public override string ToString() => $"{Name} ({Age} anos) - {Country.Name}";
+
         #endregion
     }
 

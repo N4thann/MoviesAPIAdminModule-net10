@@ -69,17 +69,14 @@ namespace Domain.Entities
                 .Combine(Validate.MaxLength(name, MAX_NAME_LENGTH, nameof(name)));
 
             if (validationResult.IsFailure)
-            {
                 return Result<bool>.AsFailure(validationResult.Failure!);
-            }
 
             if (!string.IsNullOrWhiteSpace(history))
             {
                 var historyValidation = Validate.MaxLength(history, MAX_HISTORY_LENGTH, nameof(history));
+
                 if (historyValidation.IsFailure)
-                {
                     return Result<bool>.AsFailure(historyValidation.Failure!);
-                }
             }
 
             Name = name.Trim();
@@ -92,10 +89,9 @@ namespace Domain.Entities
         public Result<bool> UpdateCountry(Country country)
         {
             var validationResult = Validate.NotNull(country, nameof(country));
+
             if (validationResult.IsFailure)
-            {
                 return Result<bool>.AsFailure(validationResult.Failure!);
-            }
 
             Country = country;
             UpdatedAt = DateTime.UtcNow;
@@ -106,10 +102,9 @@ namespace Domain.Entities
         public Result<bool> UpdateFoundationDate(DateTime foundationDate) 
         {
             var validationResult = Validate.IsPastDate(foundationDate, nameof(foundationDate), allowToday: true);
+
             if (validationResult.IsFailure)
-            {
                 return Result<bool>.AsFailure(validationResult.Failure!);
-            }
 
             FoundationDate = foundationDate.Date;
             UpdatedAt = DateTime.UtcNow;
@@ -137,14 +132,13 @@ namespace Domain.Entities
         {
             var today = DateTime.Today;
             var years = today.Year - foundationDate.Year;
-            if (foundationDate.Date > today.AddYears(-years)) years--;
+
+            if (foundationDate.Date > today.AddYears(-years)) 
+                years--;
 
             return years;
         }
-        public override string ToString()
-        {
-            return $"{Name} (Fundado em {FoundationDate.Year}) - {Country.Name}";
-        }
+        public override string ToString() => $"{Name} (Fundado em {FoundationDate.Year}) - {Country.Name}";
         #endregion
     }
 }

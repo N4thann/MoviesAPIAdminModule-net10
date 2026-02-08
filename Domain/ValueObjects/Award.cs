@@ -1,6 +1,7 @@
 ﻿using Domain.SeedWork;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Validation;
+using Domain.SmartEnums;
 
 namespace Domain.ValueObjects
 {
@@ -51,9 +52,6 @@ namespace Domain.ValueObjects
             yield return Year;
         }
 
-        public override string ToString()
-        {
-            return $"{Category.Name} ({Institution.Name}, {Year})";
-        }
+        public override string ToString() => $"{Category.Name} ({Institution.Name}, {Year})";
     }
 }

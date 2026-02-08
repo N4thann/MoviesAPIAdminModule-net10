@@ -1,6 +1,6 @@
 ﻿namespace Application.DTOs.Response
 {
-    public record class MovieBasicInfoResponse(
+    public sealed record MovieBasicInfoResponse(
         Guid Id,
         string Title,
         string OriginalTitle,

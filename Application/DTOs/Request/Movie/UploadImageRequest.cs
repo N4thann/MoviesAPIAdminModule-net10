@@ -3,7 +3,7 @@ using static Domain.ValueObjects.MovieImage;
 
 namespace Application.DTOs.Request.Movie
 {
-    public record class UploadImageRequest(
+    public sealed record UploadImageRequest(
         IFormFile ImageFile,
         ImageType ImageType,
         string? AltText

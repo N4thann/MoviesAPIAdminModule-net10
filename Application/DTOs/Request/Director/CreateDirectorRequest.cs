@@ -2,7 +2,7 @@
 
 namespace Application.DTOs.Request.Director
 {
-    public record class CreateDirectorRequest(
+    public sealed record CreateDirectorRequest(
         string Name,
         DateTime BirthDate,
         string CountryName,

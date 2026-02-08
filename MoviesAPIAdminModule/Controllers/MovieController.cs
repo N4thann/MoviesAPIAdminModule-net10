@@ -41,7 +41,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Cria um novo filme")]
-        [OpenApiTag("Movies Commands")]
+        [OpenApiTag("Movies")]
         public async Task<IActionResult> CreateMovie([FromBody] CreateMovieRequest request, CancellationToken cancellationToken)
         {
             var command = new CreateMovieCommand(
@@ -103,7 +103,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Obtém um filme por ID")]
-        [OpenApiTag("Movies Queries")]
+        [OpenApiTag("Movies")]
         public async Task<IActionResult> GetMovieById(Guid id, CancellationToken cancellationToken)
         {
 
@@ -123,7 +123,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Lista todos os filmes")]
-        [OpenApiTag("Movies Queries")]
+        [OpenApiTag("Movies")]
         public async Task<IActionResult> GetAllPagination([FromQuery] MovieParametersRequest parameters, CancellationToken cancellationToken)
         {
             var query = new ListMoviesQuery(parameters);
@@ -155,7 +155,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Lista filmes com filtros e paginação")]
-        [OpenApiTag("Movies Queries")]
+        [OpenApiTag("Movies")]
         public async Task<IActionResult> GetFilteredMovies([FromQuery] MovieBasicFilterRequest request, CancellationToken cancellationToken)
         {
             var query = new MovieBasicFilterQuery(
@@ -198,7 +198,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Exclui um filme por ID")]
-        [OpenApiTag("Movies Commands")]
+        [OpenApiTag("Movies")]
         public async Task<IActionResult> DeleteMovie(Guid id, CancellationToken cancellationToken)
         {
             var command = new DeleteMovieCommand(id);
@@ -218,7 +218,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Adiciona um prêmio ao filme")]
-        [OpenApiTag("Movies Commands")]
+        [OpenApiTag("Movies")]
         public async Task<IActionResult> AddAwardToMovie(Guid Id, [FromBody] AwardRequest request, CancellationToken cancellationToken)
         {
             var command = new AddAwardCommand(
@@ -244,7 +244,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Adiciona uma imagem que pode ser do tipo Poster, Thumbnail ou Gallery ao filme")]
-        [OpenApiTag("Movies Commands")]
+        [OpenApiTag("Movies")]
         public async Task<IActionResult> UploadImage(Guid Id, [FromForm] UploadImageRequest request, CancellationToken cancellationToken)
         {
             if (request.ImageFile == null || request.ImageFile.Length == 0)

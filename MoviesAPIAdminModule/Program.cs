@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Infraestructure.Extensions;
 using Microsoft.Extensions.FileProviders;
 using MoviesAPIAdminModule.Extensions;
 using MoviesAPIAdminModule.Filters;
@@ -8,8 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 
-builder.Services.AddHttpContextAccessor(); // Needed for UseStaticFiles
-//builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions()); // Needed for AWS S3
+builder.Services.AddHttpContextAccessor(); // Necessário para UseStaticFiles
+//builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions()); // Necessário para AWS S3
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApiDocument(settings =>
 {
@@ -33,7 +34,7 @@ builder.Services.AddOpenApiDocument(settings =>
         };
     };
 
-    // Define the security scheme for JWT Bearer tokens in Intecegration with Swagger / NSwag
+    // Define o esquema de segurança para tokens JWT Bearer em integração com Swagger / NSwag
     settings.AddSecurity("Bearer", new NSwag.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -61,70 +62,74 @@ builder.Services.AddApiVersioning(o =>
 
 builder.Services.AddScoped<ApiLoggingFilter>();
 
-builder.Logging.ClearProviders(); // Remove all logging providers configured by default by ASP.NET Core (such as EventLog, Console, Debug)
-builder.Logging.AddConsole(); // Adds the provider that writes logs to the application's console/terminal
-builder.Logging.AddDebug(); // Adds the provider that writes logs to the Visual Studio Debug Output window
+builder.Logging.ClearProviders(); // Remove todos os provedores de log configurados por padrão pelo ASP.NET Core (como EventLog, Console, Debug)
+builder.Logging.AddConsole(); // Adiciona o provedor que escreve logs no console/terminal da aplicação
+builder.Logging.AddDebug(); // Adiciona o provedor que escreve logs na janela de saída de depuração do Visual Studio
 
-// Calls to extension methods
-// 1. Register infrastructure services first (including AddIdentity)
-// 2. Register application services
-// 3. Register Web API services last so that JWT configuration overrides Identity defaults.
+// Chamadas para métodos de extensão
+// 1. Registrar serviços de infraestrutura primeiro (incluindo AddIdentity)
+// 2. Registrar serviços da aplicação
+// 3. Registrar serviços da Web API por último para que a configuração JWT substitua os padrões do Identity.
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddWebApiServices(builder.Configuration);
 
 var app = builder.Build();
 
+await app.Services.ApplyMigrationsAndSeedAsync();//Um método para aplicar as Migrations automaticamente.
+//Uma lógica de Seed (população inicial) que leia o seu arquivo .txt.
+
 if (app.Environment.IsDevelopment())
 {
     app.ConfigureExceptionHandler();
-    // 1. The Generator (where the .json file is created)
-    // We need to tell it to use the SAME path that the UI expects.
+    // 1. O gerador (onde o arquivo .json é criado)
+    // Precisamos dizer para usar o MESMO caminho que a UI espera.
     app.UseOpenApi(settings =>
     {
         settings.Path = "/openapi/{documentName}/openapi.json";
     });
 
-    // 2. The UI (where the user sees it)
-    // (Yours was almost correct, pointing to the correct path)
+    // 2. A UI (onde o usuário a visualiza)
+    // (O seu estava quase correto, apontando para o caminho correto)
     app.UseSwaggerUi(settings =>
     {
-        // This path MUST be the same as the 'settings.Path' above
+        // Este caminho DEVE ser o mesmo que 'settings.Path' acima
         settings.DocumentPath = "/openapi/{documentName}/openapi.json";
         settings.DocumentTitle = "Movies API - Docs";
     });
 }
 
-#region ===== FIXED STATIC FILES CONFIGURATION =====
+#region ===== CONFIGURAÇÃO FIXA DE ARQUIVOS ESTÁTICOS =====
 
-// 1. Get the relative path from appsettings.json
+// 1. Obter o caminho relativo de appsettings.json
 var staticFilesPath = builder.Configuration.GetValue<string>("FileStorageSettings:LocalUploadPath");
 
 if (string.IsNullOrEmpty(staticFilesPath))
     throw new InvalidOperationException("The key 'FileStorageSettings:LocalUploadPath' is not configured in appsettings.json.");
 
 
-// 2. Build the full physical path using the project's root (not the bin folder)
+// 2. Construir o caminho físico completo usando a raiz do projeto (não a pasta bin)
 var physicalPath = Path.Combine(builder.Environment.ContentRootPath, staticFilesPath);
 
-// 3. Ensure the directory exists on disk
+// 3. Garantir que o diretório exista no disco
 if (!Directory.Exists(physicalPath))
     Directory.CreateDirectory(physicalPath);
 
 
-// 4. Configure the middleware to serve files from the correct folder
+// 4. Configurar o middleware para servir arquivos da pasta correta
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(physicalPath),
     RequestPath = $"/{staticFilesPath.Replace("\\", "/")}"
+
 });
 
 #endregion
 
-app.UseHttpsRedirection(); // Recommended to enable for production
-app.UseStaticFiles(); // To serve files (such as movie images)
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 
-app.UseRouting(); // Although implicit, it's good to know it's here
+app.UseRouting(); 
 app.UseRateLimiter();
 
 app.UseCors("AllowMyClient");

@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Domain.ValueObjects
+namespace Domain.SmartEnums
 {
     public abstract class Enumeration : IComparable
     {

@@ -39,7 +39,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Cria um novo diretor")]
-        [OpenApiTag("Director Commands")]
+        [OpenApiTag("Director")]
         public async Task<IActionResult> CreateDirector([FromBody] CreateDirectorRequest request, CancellationToken cancellationToken)
         {
             var command = new CreateDirectorCommand(
@@ -97,7 +97,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Obtém um diretor por ID")]
-        [OpenApiTag("Director Queries")]
+        [OpenApiTag("Director")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
         {
             var query = new GetDirectorByIdQuery(id);
@@ -117,7 +117,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Lista todos os diretores aplicando paginação")]
-        [OpenApiTag("Director Queries")]
+        [OpenApiTag("Director")]
         public async Task<IActionResult> GetAllPagination([FromQuery] DirectorParametersRequest parameters,CancellationToken cancellationToken)
         {
             var query = new ListDirectorsQuery(parameters);
@@ -148,7 +148,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Lista diretores com filtros e paginação")]
-        [OpenApiTag("Director Queries")]
+        [OpenApiTag("Director")]
         public async Task<IActionResult> GetFilteredDirectors([FromQuery] DirectorFilterRequest request, CancellationToken cancellationToken)
         {
             var query = new DirectorFilterQuery(
@@ -188,7 +188,7 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiOperation("Exclui um diretor por ID")]
-        [OpenApiTag("Director Commands")]
+        [OpenApiTag("Director")]
         public async Task<IActionResult> DeleteDirector(Guid id, CancellationToken cancellationToken)
         {
             var command = new DeleteDirectorCommand(id);

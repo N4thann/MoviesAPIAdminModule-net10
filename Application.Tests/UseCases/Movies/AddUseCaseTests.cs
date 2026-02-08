@@ -3,7 +3,7 @@ using Application.UseCases.Movies;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.SeedWork.Interfaces;
-using Domain.ValueObjects;
+using Domain.SmartEnums;
 using FluentAssertions;
 using NSubstitute;
 using Tests.Shared;

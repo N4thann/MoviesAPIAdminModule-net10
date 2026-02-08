@@ -22,8 +22,8 @@ namespace Application.UseCases.Uses
             var users = await _userManager.Users
                 .Select(user => new UserSummaryResponse(
                     user.Id,
-                    user.UserName,
-                    user.Email,
+                    user.UserName!,
+                    user.Email!,
                     user.PhoneNumber))
                 .ToListAsync(cancellationToken);
 

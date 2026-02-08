@@ -42,7 +42,6 @@ namespace MoviesAPIAdminModule.Controllers
         }
 
         [HttpPost("register")]
-        [Authorize(Policy = "AdminOnly")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]

@@ -31,7 +31,7 @@ namespace MoviesAPIAdminModule.Extensions
                 options.AddPolicy(name: nomeDaPoliticaCORS,
                     policy =>
                     {
-                        policy.WithOrigins("http://www.apirequest.io", "http://localhost:4200", "https://localhost:7211") 
+                        policy.WithOrigins("http://localhost:5173") 
                               .AllowAnyHeader() 
                               .AllowAnyMethod(); 
                     });

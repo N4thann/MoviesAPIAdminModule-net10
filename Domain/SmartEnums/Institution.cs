@@ -1,4 +1,4 @@
-﻿namespace Domain.ValueObjects
+﻿namespace Domain.SmartEnums
 {
     public class Institution : Enumeration
     {

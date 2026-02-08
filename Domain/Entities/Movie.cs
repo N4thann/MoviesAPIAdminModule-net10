@@ -126,8 +126,8 @@ namespace Domain.Entities
         public IEnumerable<MovieImage> GalleryImages => _images.Where(img => img.Type == MovieImage.ImageType.Gallery);
 
         // Outras propriedades calculadas
-        public bool HasPoster => Poster != null;
-        public bool HasThumbnail => Thumbnail != null;
+        public bool HasPoster => Poster! != null;
+        public bool HasThumbnail => Thumbnail! != null;
         public int GalleryImagesCount => GalleryImages.Count();
 
         #region Métodos de Negócio - Informações Básicas
@@ -192,9 +192,7 @@ namespace Domain.Entities
         {
             var validationResult = Validate.NotNull(country, nameof(country));
             if (validationResult.IsFailure)
-            {
                 return Result<bool>.AsFailure(validationResult.Failure!);
-            }
 
             Country = country;
             UpdatedAt = DateTime.UtcNow;
@@ -269,6 +267,7 @@ namespace Domain.Entities
                 return Result<bool>.AsFailure(Failure.Validation("Imagem deve ser do tipo Thumbnail"));
 
             var existingThumbnail = Thumbnail;
+
             if (existingThumbnail != null)
                 _images.Remove(existingThumbnail);
 
@@ -281,6 +280,7 @@ namespace Domain.Entities
         public Result<bool> AddGalleryImage(MovieImage galleryImage)
         {
             var validation = Validate.NotNull(galleryImage, nameof(galleryImage));
+
             if (validation.IsFailure)
                 return Result<bool>.AsFailure(validation.Failure!);
 
@@ -314,10 +314,7 @@ namespace Domain.Entities
 
         #region Métodos de Negócio - Regras Calculadas
 
-        public bool IsBlockbuster()
-        {
-            return BoxOffice?.Amount >= 100_000_000; 
-        }
+        public bool IsBlockbuster() => BoxOffice?.Amount >= 100_000_000; 
 
         public bool IsWellRated(decimal threshold = 7.0m)
         {
@@ -326,32 +323,19 @@ namespace Domain.Entities
         }
 
 
-        public bool IsClassic()
-        {
-            return DateTime.UtcNow.Year - ReleaseYear >= 30;
-        }
+        public bool IsClassic() => DateTime.UtcNow.Year - ReleaseYear >= 30;
+        
 
-        public bool IsRecent()
-        {
-            return DateTime.UtcNow.Year - ReleaseYear <= 3;
-        }
+        public bool IsRecent() => DateTime.UtcNow.Year - ReleaseYear <= 3;
 
-        public bool WasProfitable()
-        {
-            return Budget != null && BoxOffice != null &&
+        public bool WasProfitable() => 
+                   Budget != null && BoxOffice != null &&
                    BoxOffice.Currency == Budget.Currency &&
                    BoxOffice.Amount > Budget.Amount;
-        }
 
-        public bool IsLongMovie()
-        {
-            return Duration.Minutes > 150;
-        }
+        public bool IsLongMovie() => Duration.Minutes > 150;
 
-        public override string ToString()
-        {
-            return $"{Name} ({ReleaseYear}) - {Duration.ToString} - {Rating}";
-        }
+        public override string ToString() => $"{Name} ({ReleaseYear}) - {Duration.ToString} - {Rating}";
         #endregion
     }
 }
