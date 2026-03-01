@@ -30,7 +30,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
-        [OpenApiOperation("(Admin) Cria uma nova role (função) no sistema.")]
         public async Task<IActionResult> CreateRole([FromBody] CreateRoleRequest request, CancellationToken cancellationToken)
         {
             var command = new CreateRoleCommand(request.RoleName);
@@ -48,7 +47,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
-        [OpenApiOperation("(Admin) Adiciona um usuário a uma role existente.")]
         public async Task<IActionResult> AddUserToRole([FromBody] AddUserToRoleRequest request, CancellationToken cancellationToken)
         {
             var command = new AddUserToRoleCommand(request.Email, request.RoleName);
@@ -65,7 +63,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(IEnumerable<RoleResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [OpenApiOperation("(Admin) Lista todas as roles disponíveis no sistema.")]
         public async Task<IActionResult> GetAllRoles(CancellationToken cancellationToken)
         {
             var query = new GetAllRolesQuery();

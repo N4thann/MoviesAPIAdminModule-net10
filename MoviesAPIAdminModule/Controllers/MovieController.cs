@@ -1,5 +1,7 @@
 ﻿using Application.Commands.Movie;
 using Application.DTOs.Request.Movie;
+using Application.DTOs.Response;
+using Application.DTOs.Response.Directors;
 using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Application.Queries.Movie;
@@ -25,6 +27,7 @@ namespace MoviesAPIAdminModule.Controllers
     [Produces("application/json")]
     [ApiVersion("1.0")]
     [EnableRateLimiting("fixedwindow")]
+    [OpenApiTag("Movies")]
     //[ApiVersion("1.0, Deprecared = true")] Para indicar que essa versão está depreciada e irá ser descontinuada no futuro
     //[ApiConventionType(typeof(DefaultApiConventions))] Caso não tivessemos retornos personalizados e fosse preciso um mais geral
     //[ApiExplorerSettings(IgnoreApi = true)] Caso eu quisesse ignora a documentação na interface do swagger dessa controller
@@ -47,7 +50,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Movies")]
         public async Task<IActionResult> CreateMovie([FromBody] CreateMovieRequest request, CancellationToken cancellationToken)
         {
             var command = new CreateMovieCommand(
@@ -114,7 +116,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Movies")]
         public async Task<IActionResult> GetMovieById(Guid id, CancellationToken cancellationToken)
         {
 
@@ -138,8 +139,7 @@ namespace MoviesAPIAdminModule.Controllers
         [HttpGet("filtered")]
         [ProducesResponseType(typeof(IPagedList<MovieTableResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Movies")]
+        [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]       
         public async Task<IActionResult> GetFilteredMovies([FromQuery] MovieBasicFilterRequest request, CancellationToken cancellationToken)
         {
             var query = new MovieBasicFilterQuery(
@@ -157,20 +157,17 @@ namespace MoviesAPIAdminModule.Controllers
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
 
-            var response = result.Success;
+            var pagedList = result.Success!;
 
-            var metadata = new
-            {
-                response.Count,
-                response.PageSize,
-                response.PageIndex,
-                response.TotalPageCount,
-                response.TotalItemCount,
-                response.HasNextPage,
-                response.HasPreviousPage
-            };
-
-            Response.Headers["X-Pagination"] = JsonConvert.SerializeObject(metadata);
+            var response = new PagedResponse<MovieTableResponse>(
+                Items: pagedList,
+                CurrentPage: pagedList.PageIndex,
+                PageSize: pagedList.PageSize,
+                TotalCount: pagedList.TotalItemCount,
+                TotalPages: pagedList.TotalPageCount,
+                HasNext: pagedList.HasNextPage,
+                HasPrevious: pagedList.HasPreviousPage
+            );
 
             return Ok(response);
         }
@@ -185,7 +182,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Movies")]
         public async Task<IActionResult> DeleteMovie(Guid id, CancellationToken cancellationToken)
         {
             var command = new DeleteMovieCommand(id);
@@ -211,7 +207,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Movies")]
         public async Task<IActionResult> AddAwardsToMovie(Guid id, [FromBody] AddAwardsToMovieRequest request, CancellationToken cancellationToken)
         {
             var command = new AddAwardsToMovieCommand(id, request.Awards);
@@ -238,7 +233,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Movies")]
         public async Task<IActionResult> UploadImage(Guid Id, [FromForm] UploadImageRequest request, CancellationToken cancellationToken)
         {
             if (request.ImageFile == null || request.ImageFile.Length == 0)

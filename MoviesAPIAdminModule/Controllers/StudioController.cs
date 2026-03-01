@@ -1,5 +1,7 @@
 ﻿using Application.Commands.Studio;
 using Application.DTOs.Request.Studio;
+using Application.DTOs.Response;
+using Application.DTOs.Response.Movies;
 using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Application.Queries.Studio;
@@ -20,6 +22,7 @@ namespace MoviesAPIAdminModule.Controllers
     [Authorize(Policy = "AdminOnly")]
     [Produces("application/json")]
     [ApiVersion("1.0")]
+    [OpenApiTag("Studio")]
     public class StudioController : BaseApiController
     {
         private readonly IMediator _mediator;
@@ -36,7 +39,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(StudioInfoResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Studio")]
         public async Task<IActionResult> CreateStudio([FromBody] CreateStudioRequest request, CancellationToken cancellationToken)
         {
             var command = new CreateStudioCommand(
@@ -69,7 +71,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(StudioInfoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Studio")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken) 
         {
             var query = new GetStudioByIdQuery(id);
@@ -93,7 +94,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(IPagedList<StudioTableResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Studio")]
         public async Task<IActionResult> GetFilteredStudios([FromQuery] StudioFilterRequest request, CancellationToken cancellationToken)
         {
             var query = new StudioFilterQuery(
@@ -110,22 +110,19 @@ namespace MoviesAPIAdminModule.Controllers
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
 
-            var response = result.Success!;
+            var pagedList = result.Success!;
 
-            var metadata = new
-            {
-                response.Count,
-                response.PageSize,
-                response.PageIndex,
-                response.TotalPageCount,
-                response.TotalItemCount,
-                response.HasNextPage,
-                response.HasPreviousPage
-            };
+            var response = new PagedResponse<StudioTableResponse>(
+                Items: pagedList,
+                CurrentPage: pagedList.PageIndex,
+                PageSize: pagedList.PageSize,
+                TotalCount: pagedList.TotalItemCount,
+                TotalPages: pagedList.TotalPageCount,
+                HasNext: pagedList.HasNextPage,
+                HasPrevious: pagedList.HasPreviousPage
+            );
 
-            Response.Headers["X-Pagination"] = JsonConvert.SerializeObject(metadata);
-
-            return Ok(response);         
+            return Ok(response);
         }
 
         //[HttpPatch("{id}")]
@@ -167,7 +164,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Studio")]
         public async Task<IActionResult> DeleteStudio(Guid id, CancellationToken cancellationToken)
         {
             var command = new DeleteStudioCommand(id);

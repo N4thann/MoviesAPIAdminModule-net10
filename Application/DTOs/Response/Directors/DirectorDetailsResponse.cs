@@ -11,7 +11,7 @@
 
     public sealed record MovieSummaryResponse(
         Guid Id,
-        string Title,
+        string Name,
         string GenreName,
         int ReleaseYear,
         List<AwardResponse> Awards

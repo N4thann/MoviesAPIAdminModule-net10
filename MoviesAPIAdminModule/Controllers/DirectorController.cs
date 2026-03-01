@@ -1,6 +1,6 @@
 ﻿using Application.Commands.Director;
-using Application.Common.Parameters;
 using Application.DTOs.Request.Director;
+using Application.DTOs.Response;
 using Application.DTOs.Response.Directors;
 using Application.Interfaces.Mediator;
 using Application.Queries.Director;
@@ -9,7 +9,6 @@ using Domain.SeedWork.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MoviesAPIAdminModule.Filters;
-using Newtonsoft.Json;
 using NSwag.Annotations;
 using Pandorax.PagedList;
 
@@ -21,6 +20,7 @@ namespace MoviesAPIAdminModule.Controllers
     [Authorize(Policy = "AdminOnly")]
     [Produces("application/json")]
     [ApiVersion("1.0")]
+    [OpenApiTag("Director")]
     public class DirectorController : BaseApiController
     {
         private readonly IMediator _mediator;
@@ -36,7 +36,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(DirectorInfoResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Director")]
         public async Task<IActionResult> CreateDirector([FromBody] CreateDirectorRequest request, CancellationToken cancellationToken)
         {
             var command = new CreateDirectorCommand(
@@ -98,7 +97,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(DirectorInfoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Director")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
         {
             var query = new GetDirectorByIdQuery(id);
@@ -123,7 +121,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(typeof(DirectorDetailsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Director")]
         public async Task<IActionResult> GetDetails(Guid id, CancellationToken cancellationToken)
         {
             var query = new DetailsDirectorQuery(id);
@@ -144,8 +141,7 @@ namespace MoviesAPIAdminModule.Controllers
         [HttpGet("filtered")]
         [ProducesResponseType(typeof(IPagedList<DirectorTableResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Director")]
+        [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]       
         public async Task<IActionResult> GetFilteredDirectors([FromQuery] DirectorFilterRequest request, CancellationToken cancellationToken)
         {
             var query = new DirectorFilterQuery(
@@ -162,20 +158,17 @@ namespace MoviesAPIAdminModule.Controllers
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
 
-            var response = result.Success!;
+            var pagedList = result.Success!;
 
-            var metadata = new
-            {
-                response.Count,
-                response.PageSize,
-                response.PageIndex,
-                response.TotalPageCount,
-                response.TotalItemCount,
-                response.HasNextPage,
-                response.HasPreviousPage
-            };
-
-            Response.Headers["X-Pagination"] = JsonConvert.SerializeObject(metadata);
+            var response = new PagedResponse<DirectorTableResponse>(
+                Items: pagedList, 
+                CurrentPage: pagedList.PageIndex,
+                PageSize: pagedList.PageSize,
+                TotalCount: pagedList.TotalItemCount,
+                TotalPages: pagedList.TotalPageCount,
+                HasNext: pagedList.HasNextPage,
+                HasPrevious: pagedList.HasPreviousPage
+            );
 
             return Ok(response);
         }
@@ -190,7 +183,6 @@ namespace MoviesAPIAdminModule.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiTag("Director")]
         public async Task<IActionResult> DeleteDirector(Guid id, CancellationToken cancellationToken)
         {
             var command = new DeleteDirectorCommand(id);

@@ -40,6 +40,14 @@ namespace Application.DTOs.Mappings
                 .Map(dest => dest.CountryName, src => src.Country.Name)
                 .Map(dest => dest.CountryCode, src => src.Country.Code)
                 .Map(dest => dest.Age, src => src.Age);
+
+            config.NewConfig<Director, DirectorDetailsResponse>()
+                .Map(dest => dest.CountryName, src => src.Country.Name)
+                .Map(dest => dest.Movies, src => new List<MovieSummaryResponse>()); 
+
+            config.NewConfig<Award, AwardResponse>()
+                .Map(dest => dest.Category, src => src.Category.Name)
+                .Map(dest => dest.Institution, src => src.Institution.Name);
         }
     }
 }

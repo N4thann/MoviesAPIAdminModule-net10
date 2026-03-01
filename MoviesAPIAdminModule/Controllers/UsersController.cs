@@ -1,5 +1,6 @@
 using Application.Commands.User;
 using Application.DTOs.Authentication;
+using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interfaces.Mediator;
 using Application.Queries.User;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MoviesAPIAdminModule.Filters;
 using NSwag.Annotations;
+using Pandorax.PagedList;
 
 namespace MoviesAPIAdminModule.Controllers
 {
@@ -25,24 +27,44 @@ namespace MoviesAPIAdminModule.Controllers
         public UsersController(IMediator mediator) => _mediator = mediator;
 
         /// <summary>
-        /// Lista todos os usuários registrados no sistema (requer permissão de administrador).
+        /// Retorna uma lista paginada de usuários aplicando filtros opcionais de nome de usuário e email.
+        /// Requer autorização com a política "AdminOnly".
         /// </summary>
+        /// <param name="request">Objeto contendo filtros (UserName, Email) e parâmetros de paginação.</param>
         /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
-        /// <returns>Um <see cref="IActionResult"/> contendo uma coleção de usuários resumidos com status 200 OK em caso de sucesso; ou 401/403 em caso de autorização negada.</returns>
-        [HttpGet]
+        /// <returns>
+        /// Retorna 200 (OK) com um <see cref="PagedResponse{UserSummaryResponse}"/> em caso de sucesso;
+        /// 401 (Unauthorized) se o usuário não estiver autenticado;
+        /// 403 (Forbidden) se o usuário não tiver a permissão necessária.
+        /// Em caso de falha operacional, retorna a Failure apropriada conforme o pipeline de erros.
+        /// </returns>
+        [HttpGet("filtered")]
         [Authorize(Policy = "AdminOnly")]
-        [ProducesResponseType(typeof(IEnumerable<UserSummaryResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResponse<UserSummaryResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)] 
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetAll([FromQuery] UserFilterRequest request, CancellationToken cancellationToken)
         {
-            var query = new GetAllUsersQuery();
-            var result = await _mediator.Query<GetAllUsersQuery, Result<IEnumerable<UserSummaryResponse>>>(query, cancellationToken);
+            var query = new GetAllUsersQuery(request.UserName, request.Email, request);
+
+            var result = await _mediator.Query<GetAllUsersQuery, Result<IPagedList<UserSummaryResponse>>>(query, cancellationToken);
 
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
 
-            return Ok(result.Success);
+            var pagedList = result.Success!;
+
+            var response = new PagedResponse<UserSummaryResponse>(
+                Items: pagedList,
+                CurrentPage: pagedList.PageIndex,
+                PageSize: pagedList.PageSize,
+                TotalCount: pagedList.TotalItemCount,
+                TotalPages: pagedList.TotalPageCount,
+                HasNext: pagedList.HasNextPage,
+                HasPrevious: pagedList.HasPreviousPage
+            );
+
+            return Ok(response);
         }
 
         /// <summary>
