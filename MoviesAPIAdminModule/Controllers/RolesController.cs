@@ -1,5 +1,6 @@
 ﻿using Application.Commands.Role;
 using Application.DTOs.Authentication;
+using Application.DTOs.Request;
 using Application.DTOs.Response;
 using Application.Interfaces.Mediator;
 using Application.Queries.Roles;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using MoviesAPIAdminModule.Filters;
 using NSwag.Annotations;
+using Pandorax.PagedList;
 
 namespace MoviesAPIAdminModule.Controllers
 {
@@ -58,20 +60,31 @@ namespace MoviesAPIAdminModule.Controllers
             return NoContent();
         }
 
-        [HttpGet]
+        [HttpGet("filtered")]
         [Authorize(Policy = "AdminOnly")]
-        [ProducesResponseType(typeof(IEnumerable<RoleResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> GetAllRoles(CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(PagedResponse<RoleResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllRoles([FromQuery] RoleFilterRequest request, CancellationToken cancellationToken)
         {
-            var query = new GetAllRolesQuery();
-            var result = await _mediator.Query<GetAllRolesQuery, Result<IEnumerable<RoleResponse>>>(query, cancellationToken);
+            var query = new GetAllRolesQuery(request.Name, request);
+
+            var result = await _mediator.Query<GetAllRolesQuery, Result<IPagedList<RoleResponse>>>(query, cancellationToken);
 
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
 
-            return Ok(result.Success);
+            var pagedList = result.Success!;
+
+            var response = new PagedResponse<RoleResponse>(
+                Items: pagedList,
+                CurrentPage: pagedList.PageIndex,
+                PageSize: pagedList.PageSize,
+                TotalCount: pagedList.TotalItemCount,
+                TotalPages: pagedList.TotalPageCount,
+                HasNext: pagedList.HasNextPage,
+                HasPrevious: pagedList.HasPreviousPage
+            );
+
+            return Ok(response);
         }
     }
 }
