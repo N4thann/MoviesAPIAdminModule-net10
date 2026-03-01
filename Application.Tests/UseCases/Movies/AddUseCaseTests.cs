@@ -17,7 +17,7 @@ namespace Application.Tests.UseCases.Movies
         private readonly IUnitOfWork _subUnitOfWork;
 
         private readonly Movie _validMovie;
-        private readonly AddAwardCommand _validCommand;
+        private readonly AddAwardsToMovieCommand _validCommand;
 
         #region CONSTRUCTOR
         public AddUseCaseTests()
@@ -31,7 +31,7 @@ namespace Application.Tests.UseCases.Movies
 
             _validMovie = TestDataFactory.CreateInceptionMovie().Success!;
 
-            _validCommand = new AddAwardCommand(
+            _validCommand = new AddAwardsToMovieCommand(
                 _validMovie.Id,
                 AwardCategory.BestCinematography.Id,
                 Institution.BAFTA.Id,           
@@ -86,7 +86,7 @@ namespace Application.Tests.UseCases.Movies
         public async Task Handle_WhenSmartEnumIdIsInvalid_ShouldReturnValidationFailure(int categoryId, int institutionId)
         {
             // Arrange
-            var badCommand = new AddAwardCommand(
+            var badCommand = new AddAwardsToMovieCommand(
                 _validMovie.Id,
                 categoryId,
                 institutionId,
@@ -125,7 +125,7 @@ namespace Application.Tests.UseCases.Movies
         public async Task Handle_WhenMovieAddAwardFails_ShouldReturnDomainFailure()
         {
             // Arrange
-            var duplicateAwardCommand = new AddAwardCommand(
+            var duplicateAwardCommand = new AddAwardsToMovieCommand(
                 _validMovie.Id,
                 AwardCategory.BestOriginalScreenplay.Id, 
                 Institution.AcademyAwards.Id,           

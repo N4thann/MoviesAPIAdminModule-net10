@@ -1,4 +1,4 @@
-﻿namespace Application.DTOs.Response
+﻿namespace Application.DTOs.Response.Directors
 {
     public sealed record DirectorInfoResponse(
         Guid Id,

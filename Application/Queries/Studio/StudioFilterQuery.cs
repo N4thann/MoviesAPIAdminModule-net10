@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Domain.SeedWork.Core;
 using Pandorax.PagedList;
@@ -11,7 +11,7 @@ namespace Application.Queries.Studio
         string? CountryName,
         int? FoundationYearBegin,
         int? FoundationYearEnd,
-        bool Active,
+        bool? Active,
         QueryStringParameters Parameters
-    ) : IQuery<Result<IPagedList<StudioInfoResponse>>>;
+    ) : IQuery<Result<IPagedList<StudioTableResponse>>>;
 }

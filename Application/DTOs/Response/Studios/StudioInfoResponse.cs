@@ -1,4 +1,4 @@
-﻿namespace Application.DTOs.Response
+﻿namespace Application.DTOs.Response.Studios
 {
     public sealed record StudioInfoResponse(
         Guid Id,

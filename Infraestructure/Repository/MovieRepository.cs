@@ -25,5 +25,14 @@ namespace Infraestructure.Repository
                                  .Include(m => m.Awards)
                                  .FirstOrDefaultAsync(m => m.Id == movieId);
         }
+
+        public async Task<IEnumerable<Movie>> GetMoviesByDirectorIdAsync(Guid directorId)
+        {
+            return await _context.Set<Movie>()
+                            .Include(m => m.Awards)
+                            .Where(m => m.DirectorId == directorId)
+                            .OrderByDescending(m => m.ReleaseYear)
+                            .ToListAsync();
+        }
     }
 }

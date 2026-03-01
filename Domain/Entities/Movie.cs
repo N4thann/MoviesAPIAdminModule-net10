@@ -26,7 +26,7 @@ namespace Domain.Entities
         }
 
         private Movie(
-            string title,
+            string name,
             string originalTitle,
             string synopsis,
             int releaseYear,
@@ -38,7 +38,7 @@ namespace Domain.Entities
             Money? boxOffice,
             Money? budget) : this()
         {
-            Name = title.Trim();
+            Name = name.Trim();
             OriginalTitle = originalTitle.Trim();
             Synopsis = synopsis.Trim();
             ReleaseYear = releaseYear;
@@ -114,6 +114,7 @@ namespace Domain.Entities
         public Guid StudioId { get; private set; }
 
         // Propriedades de controle
+        public bool IsActive { get; private set; }
         public DateTime CreatedAt { get; private set; }
         public DateTime UpdatedAt { get; private set; }
 
@@ -204,19 +205,20 @@ namespace Domain.Entities
 
         #region Métodos de Negócio - Prêmios
 
-        public Result<bool> AddAward(Award award)
+        public Result<bool> AddAwards(IEnumerable<Award> awards)
         {
-            var validation = Validate.NotNull(award, nameof(award));
+            if (awards == null)
+                return Result<bool>.AsFailure(Failure.Validation("A lista de prêmios não pode ser nula."));
 
-            if (validation.IsFailure)
-                return Result<bool>.AsFailure(validation.Failure!);
+            foreach (var award in awards)
+            {
+                if (_awards.Contains(award))
+                    return Result<bool>.AsFailure(Failure.Conflict($"Filme já possui o prêmio: {award}"));
 
-            if (_awards.Contains(award))
-                return Result<bool>.AsFailure(Failure.Conflict("Filme já possui este prêmio neste ano"));
+                _awards.Add(award);
+            }
 
-            _awards.Add(award);
             UpdatedAt = DateTime.UtcNow;
-
             return Result<bool>.AsSuccess(true);
         }
 

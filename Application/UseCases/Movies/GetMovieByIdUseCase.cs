@@ -1,10 +1,10 @@
-﻿using Application.DTOs.Mappings;
-using Application.DTOs.Response;
+﻿using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Application.Queries.Movie;
 using Domain.Entities;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Interfaces;
+using Mapster;
 
 namespace Application.UseCases.Movies
 {
@@ -21,7 +21,9 @@ namespace Application.UseCases.Movies
             if (movie == null)
                 return Result<MovieBasicInfoResponse>.AsFailure(Failure.NotFound("Movie", query.Id));
 
-            return movie.ToMovieDTO()!;
+            var response = movie.Adapt<MovieBasicInfoResponse>();
+
+            return Result<MovieBasicInfoResponse>.AsSuccess(response);
         }
     }
 }

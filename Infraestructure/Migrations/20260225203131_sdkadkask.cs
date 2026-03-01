@@ -5,7 +5,7 @@
 namespace Infraestructure.Migrations
 {
     /// <inheritdoc />
-    public partial class corrigirmapeamentodeIdparaMovieImageeAward : Migration
+    public partial class sdkadkask : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

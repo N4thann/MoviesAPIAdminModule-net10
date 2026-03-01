@@ -43,7 +43,7 @@ namespace MoviesAPIAdminModule.Controllers
         }
 
         [HttpPost("add-user-to-role")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "SuperAdminOnly")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]

@@ -3,60 +3,62 @@
 namespace Domain.SeedWork.Interfaces
 {
     /// <summary>
-    /// Defines a generic contract for a repository that provides data access operations for entities of type T.
-    /// Supports querying, adding, and deleting entities, as well as checking for existence and retrieving entities by
-    /// identifier.
+    /// Define um contrato genérico para um repositório que fornece operações de acesso a dados para entidades do tipo T.
+    /// Suporta consulta, adição e deleção de entidades, além de verificação de existência e recuperação por identificador.
     /// </summary>
-    /// <remarks>This interface abstracts common data access patterns for working with entities in a
-    /// persistence store. Implementations typically support asynchronous operations for scalability and may be used in
-    /// conjunction with a Unit of Work pattern. The repository does not prescribe how entities are stored or retrieved,
-    /// allowing flexibility in underlying data sources (such as databases or in-memory collections).</remarks>
-    /// <typeparam name="T">The type of entity managed by the repository. Must be a reference type.</typeparam>
+    /// <remarks>
+    /// Esta interface abstrai padrões comuns de acesso a dados para trabalhar com entidades em uma fonte de persistência.
+    /// Implementações normalmente suportam operações assíncronas para escalabilidade e podem ser usadas em conjunto com o padrão Unit of Work.
+    /// O repositório não impõe como as entidades são armazenadas ou recuperadas, permitindo flexibilidade nas fontes de dados subjacentes.
+    /// </remarks>
+    /// <typeparam name="T">O tipo de entidade gerenciado pelo repositório. Deve ser um tipo de referência.</typeparam>
     public interface IRepository<T> where T : class
     {
         /// <summary>
-        /// Asynchronously retrieves an entity of type T by its unique identifier.
+        /// Recupera assincronamente uma entidade do tipo T pelo seu identificador único.
         /// </summary>
-        /// <param name="id">The unique identifier of the entity to retrieve.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the entity of type T if found;
-        /// otherwise, null.</returns>
+        /// <param name="id">O identificador único da entidade a ser recuperada.</param>
+        /// <returns>Uma tarefa que representa a operação assíncrona. O resultado contém a entidade do tipo T se encontrada; caso contrário, null.</returns>
         Task<T> GetByIdAsync(Guid id);
+
         /// <summary>
-        /// Asynchronously retrieves all entities of type <typeparamref name="T"/> from the data source.
+        /// Recupera assincronamente todas as entidades do tipo T na fonte de dados.
         /// </summary>
-        /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of all
-        /// entities of type <typeparamref name="T"/>. If no entities are found, the collection will be empty.</returns>
+        /// <returns>Uma tarefa que representa a operação assíncrona. O resultado contém uma coleção enumerável de todas as entidades do tipo T.</returns>
         Task<IEnumerable<T>> GetAllAsync();
+
         /// <summary>
-        /// Returns a queryable collection of all entities of type T in the data source.
+        /// Retorna uma coleção consultável (IQueryable) de todas as entidades do tipo T na fonte de dados.
         /// </summary>
-        /// <remarks>The returned <see cref="IQueryable{T}"/> allows for deferred execution and further
-        /// composition of queries using LINQ operators. Changes to the underlying data source after obtaining the
-        /// queryable may affect the results when the query is executed.</remarks>
-        /// <returns>An <see cref="IQueryable{T}"/> that can be used to query all entities of type T. The returned query is not
-        /// executed until enumerated.</returns>
+        /// <remarks>
+        /// O <see cref="IQueryable{T}"/> retornado permite execução diferida e composição adicional de consultas usando LINQ.
+        /// </remarks>
+        /// <returns>Um <see cref="IQueryable{T}"/> para consultar as entidades do tipo T.</returns>
         IQueryable<T> GetAllQueryable();
+
         /// <summary>
-        /// Asynchronously determines whether any entities match the specified criteria.
+        /// Determina assincronamente se alguma entidade corresponde ao predicado especificado.
         /// </summary>
-        /// <param name="predicate">An expression that defines the conditions to test against entities of type <typeparamref name="T"/>.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains <see langword="true"/> if at
-        /// least one entity matches the criteria; otherwise, <see langword="false"/>.</returns>
+        /// <param name="predicate">Uma expressão que define as condições a serem testadas contra as entidades do tipo T.</param>
+        /// <returns>Uma tarefa que representa a operação assíncrona. O resultado é true se pelo menos uma entidade corresponder aos critérios; caso contrário, false.</returns>
         Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
+
         /// <summary>
-        /// Adds the specified entity to the collection.
+        /// Adiciona a entidade especificada ao conjunto.
         /// </summary>
-        /// <param name="entity">The entity to add to the collection. Cannot be null.</param>
+        /// <param name="entity">A entidade a ser adicionada. Não pode ser nula.</param>
         void Add(T entity);
+
         /// <summary>
-        /// Adds the elements of the specified collection to the current set.
+        /// Adiciona a coleção de entidades especificada ao conjunto.
         /// </summary>
-        /// <param name="entities">The collection of entities to add. Cannot be null.</param>
+        /// <param name="entities">A coleção de entidades a ser adicionada. Não pode ser nula.</param>
         void AddRange(IEnumerable<T> entities);
+
         /// <summary>
-        /// Removes the specified entity from the data store.
+        /// Remove a entidade especificada da fonte de dados.
         /// </summary>
-        /// <param name="entity">The entity to be deleted. Cannot be null.</param>
+        /// <param name="entity">A entidade a ser removida. Não pode ser nula.</param>
         void Delete(T entity);
     }
 }

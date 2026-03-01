@@ -1,11 +1,11 @@
 ﻿using Application.Commands.Studio;
-using Application.DTOs.Mappings;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Domain.Entities;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Interfaces;
 using Domain.ValueObjects;
+using Mapster;
 
 namespace Application.UseCases.Studios
 {
@@ -42,7 +42,9 @@ namespace Application.UseCases.Studios
             _repository.Add(studio);
             await _unitOfWork.Commit(cancellationToken);
 
-            return studio.ToStudioDTO();
+            var response = studio.Adapt<StudioInfoResponse>();
+
+            return Result<StudioInfoResponse>.AsSuccess(response);
         }
     }
 }

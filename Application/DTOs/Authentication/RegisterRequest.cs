@@ -14,7 +14,8 @@ namespace Application.DTOs.Authentication
         [Required(ErrorMessage = "Passowrd is required")]
         public string? Password { get; set; }
 
-        [Phone]
+        [RegularExpression(@"^(\+?\d{1,4}[\s-]?)?\(?\d{1,4}?\)?[\s-]?\d{1,4}[\s-]?\d{1,9}$|^$",
+        ErrorMessage = "Invalid phone number format")]
         public string? PhoneNumber { get; set; }
     }
 }

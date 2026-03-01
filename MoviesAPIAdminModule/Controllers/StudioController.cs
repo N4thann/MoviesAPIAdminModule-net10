@@ -1,6 +1,6 @@
 ﻿using Application.Commands.Studio;
 using Application.DTOs.Request.Studio;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Application.Queries.Studio;
 using Asp.Versioning;
@@ -15,7 +15,7 @@ using Pandorax.PagedList;
 namespace MoviesAPIAdminModule.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/[controller]/[action]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ServiceFilter(typeof(ApiLoggingFilter))]
     [Authorize(Policy = "AdminOnly")]
     [Produces("application/json")]
@@ -26,11 +26,16 @@ namespace MoviesAPIAdminModule.Controllers
 
         public StudioController(IMediator mediator) => _mediator = mediator;
 
-        [HttpPost]
+        /// <summary>
+        /// Cria um novo estúdio usando os dados fornecidos na requisição.
+        /// </summary>
+        /// <param name="request">Objeto contendo os detalhes do estúdio a ser criado. Não deve ser nulo.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> representando o resultado da operação. Retorna 201 Created com as informações do estúdio em caso de sucesso; caso contrário, retorna 400 ou 500 conforme aplicável.</returns>
+        [HttpPost("create")]
         [ProducesResponseType(typeof(StudioInfoResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Cria um novo estúdio")]
         [OpenApiTag("Studio")]
         public async Task<IActionResult> CreateStudio([FromBody] CreateStudioRequest request, CancellationToken cancellationToken)
         {
@@ -54,11 +59,16 @@ namespace MoviesAPIAdminModule.Controllers
                 response);
         }
 
-        [HttpGet("{id}")]
+        /// <summary>
+        /// Obtém um estúdio pelo seu identificador (ID).
+        /// </summary>
+        /// <param name="id">O identificador único do estúdio.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> com os dados do estúdio e status 200 OK em caso de sucesso; ou 404/500 em caso de erro.</returns>
+        [HttpGet("getById/{id}")]
         [ProducesResponseType(typeof(StudioInfoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Obtém um estúdio por ID")]
         [OpenApiTag("Studio")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken) 
         {
@@ -73,43 +83,16 @@ namespace MoviesAPIAdminModule.Controllers
             return Ok(response);
         }
 
-        [HttpGet]
-        [ProducesResponseType(typeof(IPagedList<StudioInfoResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Lista todos os estúdios")]
-        [OpenApiTag("Studio")]
-        public async Task<IActionResult> GetAllPagination([FromQuery] StudioParametersRequest parameters, CancellationToken cancellationToken)
-        {
-            var query = new ListStudiosQuery(parameters);
-            var result = await _mediator.Query<ListStudiosQuery, Result<IPagedList<StudioInfoResponse>>>(query, cancellationToken);
-
-            if (result.IsFailure)
-                return HandleFailure(result.Failure!);
-
-            var response = result.Success!;
-
-            var metadata = new
-            {
-                response.Count,
-                response.PageSize,
-                response.PageIndex,
-                response.TotalPageCount,
-                response.TotalItemCount,
-                response.HasNextPage,
-                response.HasPreviousPage
-            };
-
-            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
-
-            return Ok(response);
-        }
-
+        /// <summary>
+        /// Lista estúdios aplicando filtros e paginação conforme os parâmetros fornecidos.
+        /// </summary>
+        /// <param name="request">Objeto de filtro com critérios como nome, país, ano de fundação e indicador de ativo.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> com uma lista paginada de estúdios filtrados e status 200 OK em caso de sucesso; ou 400/500 em caso de erro.</returns>
         [HttpGet("filtered")]
-        [ProducesResponseType(typeof(IPagedList<StudioInfoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IPagedList<StudioTableResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Lista estúdios com filtros e paginação")]
         [OpenApiTag("Studio")]
         public async Task<IActionResult> GetFilteredStudios([FromQuery] StudioFilterRequest request, CancellationToken cancellationToken)
         {
@@ -122,7 +105,7 @@ namespace MoviesAPIAdminModule.Controllers
                 request
                 );
 
-            var result = await _mediator.Query<StudioFilterQuery, Result<IPagedList<StudioInfoResponse>>>(query, cancellationToken);
+            var result = await _mediator.Query<StudioFilterQuery, Result<IPagedList<StudioTableResponse>>>(query, cancellationToken);
 
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
@@ -140,7 +123,7 @@ namespace MoviesAPIAdminModule.Controllers
                 response.HasPreviousPage
             };
 
-            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            Response.Headers["X-Pagination"] = JsonConvert.SerializeObject(metadata);
 
             return Ok(response);         
         }
@@ -174,11 +157,16 @@ namespace MoviesAPIAdminModule.Controllers
         //    return Ok(response);
         //}
 
-        [HttpDelete("{id}")]
+        /// <summary>
+        /// Exclui um estúdio pelo seu identificador (ID).
+        /// </summary>
+        /// <param name="id">O identificador único do estúdio a ser excluído.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> que retorna 204 NoContent em caso de exclusão bem-sucedida; ou 404/500 em caso de erro.</returns>
+        [HttpDelete("delete/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Exclui um estúdio por ID")]
         [OpenApiTag("Studio")]
         public async Task<IActionResult> DeleteStudio(Guid id, CancellationToken cancellationToken)
         {

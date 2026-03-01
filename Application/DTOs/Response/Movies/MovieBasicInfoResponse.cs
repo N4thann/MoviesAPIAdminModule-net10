@@ -1,4 +1,4 @@
-﻿namespace Application.DTOs.Response
+﻿namespace Application.DTOs.Response.Movies
 {
     public sealed record MovieBasicInfoResponse(
         Guid Id,
@@ -7,8 +7,10 @@
         string Synopsis,
         int ReleaseYear,
         string DurationToString,
-        string CountryToString,
-        string GenreToString,
+        string CountryName,
+        string CountryCode,
+        string GenreName,
+        string GenreDescription,
         string BoxOfficeToString,
         string BudgetToString,
         DateTime CreatedAt,

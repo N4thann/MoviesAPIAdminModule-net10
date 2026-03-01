@@ -128,12 +128,9 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting(); 
-app.UseRateLimiter();
-
 app.UseCors("AllowMyClient");
-
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization(); 
 app.MapControllers();

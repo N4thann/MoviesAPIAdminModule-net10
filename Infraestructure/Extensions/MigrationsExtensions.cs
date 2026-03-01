@@ -56,6 +56,7 @@ namespace Infraestructure.Extensions
                         if (result.Succeeded)
                         {
                             await userManager.AddToRoleAsync(superUser, "SuperAdmin");
+                            await userManager.AddToRoleAsync(superUser, "Admin");
                         }
                     }
                 }

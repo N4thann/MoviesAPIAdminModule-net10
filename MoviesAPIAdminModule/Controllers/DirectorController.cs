@@ -1,7 +1,7 @@
 ﻿using Application.Commands.Director;
 using Application.Common.Parameters;
 using Application.DTOs.Request.Director;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Directors;
 using Application.Interfaces.Mediator;
 using Application.Queries.Director;
 using Asp.Versioning;
@@ -16,7 +16,7 @@ using Pandorax.PagedList;
 namespace MoviesAPIAdminModule.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/[controller]/[action]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ServiceFilter(typeof(ApiLoggingFilter))]
     [Authorize(Policy = "AdminOnly")]
     [Produces("application/json")]
@@ -27,18 +27,15 @@ namespace MoviesAPIAdminModule.Controllers
         public DirectorController(IMediator mediator) => _mediator = mediator;
 
         /// <summary>
-        /// Creates a new director using the specified request data.
+        /// Cria um novo diretor usando os dados fornecidos na requisição.
         /// </summary>
-        /// <param name="request">The request containing the details of the director to create. Must not be null.</param>
-        /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>An <see cref="IActionResult"/> that represents the result of the operation. Returns a 201 Created response
-        /// with the director information if successful; otherwise, returns a 400 Bad Request or 500 Internal Server
-        /// Error response.</returns>
-        [HttpPost]
+        /// <param name="request">Objeto contendo os detalhes do diretor a ser criado. Não deve ser nulo.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> representando o resultado da operação. Retorna 201 Created com as informações do diretor em caso de sucesso; caso contrário, retorna 400 Bad Request ou 500 Internal Server Error.</returns>
+        [HttpPost("create")]
         [ProducesResponseType(typeof(DirectorInfoResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Cria um novo diretor")]
         [OpenApiTag("Director")]
         public async Task<IActionResult> CreateDirector([FromBody] CreateDirectorRequest request, CancellationToken cancellationToken)
         {
@@ -69,7 +66,6 @@ namespace MoviesAPIAdminModule.Controllers
         //[ProducesResponseType(StatusCodes.Status406NotAcceptable)]
         //[ProducesResponseType(StatusCodes.Status404NotFound)]
         //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        //[OpenApiOperation"Atualiza parcialmente um diretor com o JsonPatchDocument")]
         //[OpenApiTag("Director Commands")]
         //public async Task<IActionResult> UpdatePatchDirector(
         //    Guid id,
@@ -92,11 +88,16 @@ namespace MoviesAPIAdminModule.Controllers
         //    return Ok(response);
         //}
 
+        /// <summary>
+        /// Obtém um diretor pelo seu identificador (ID).
+        /// </summary>
+        /// <param name="id">O identificador único do diretor.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> com os dados do diretor e status 200 OK em caso de sucesso; ou 404/500 em caso de erro.</returns>
         [HttpGet("{id}")]       
         [ProducesResponseType(typeof(DirectorInfoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Obtém um diretor por ID")]
         [OpenApiTag("Director")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
         {
@@ -112,42 +113,38 @@ namespace MoviesAPIAdminModule.Controllers
             return Ok(response);
         }
 
-        [HttpGet]
-        [ProducesResponseType(typeof(IPagedList<DirectorInfoResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Lista todos os diretores aplicando paginação")]
+        /// <summary>
+        /// Obtém os detalhes completos de um diretor, incluindo sua biografia e a lista de filmes dirigidos com seus respectivos prêmios.
+        /// </summary>
+        /// <param name="id">O identificador único do diretor.</param>
+        /// <param name="cancellationToken">Token para cancelamento da operação.</param>
+        /// <returns>Retorna um <see cref="DirectorDetailsResponse"/> em caso de sucesso, ou falha se o diretor não for encontrado.</returns>
+        [HttpGet("{id}/details")]
+        [ProducesResponseType(typeof(DirectorDetailsResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [OpenApiTag("Director")]
-        public async Task<IActionResult> GetAllPagination([FromQuery] DirectorParametersRequest parameters,CancellationToken cancellationToken)
+        public async Task<IActionResult> GetDetails(Guid id, CancellationToken cancellationToken)
         {
-            var query = new ListDirectorsQuery(parameters);
-            var result = await _mediator.Query<ListDirectorsQuery, Result<IPagedList<DirectorInfoResponse>>>(query, cancellationToken);
+            var query = new DetailsDirectorQuery(id);
+            var result = await _mediator.Query<DetailsDirectorQuery, Result<DirectorDetailsResponse>>(query, cancellationToken);
 
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
 
-            var response = result.Success!;
-
-            var metadata = new
-            {
-                response.Count,
-                response.PageSize,
-                response.PageIndex,
-                response.TotalItemCount,
-                response.HasNextPage,
-                response.HasPreviousPage
-            };
-
-            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
-
-            return Ok(response);
+            return Ok(result.Success);
         }
 
+        /// <summary>
+        /// Lista diretores aplicando filtros e paginação conforme os parâmetros fornecidos.
+        /// </summary>
+        /// <param name="request">Objeto de filtro contendo critérios como nome, país, faixa etária e indicador de ativo.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> com uma lista paginada de diretores filtrados e status 200 OK em caso de sucesso; ou 400/500 em caso de erro.</returns>
         [HttpGet("filtered")]
-        [ProducesResponseType(typeof(IPagedList<DirectorInfoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IPagedList<DirectorTableResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Lista diretores com filtros e paginação")]
         [OpenApiTag("Director")]
         public async Task<IActionResult> GetFilteredDirectors([FromQuery] DirectorFilterRequest request, CancellationToken cancellationToken)
         {
@@ -160,7 +157,7 @@ namespace MoviesAPIAdminModule.Controllers
                 request
                 );
 
-            var result = await _mediator.Query<DirectorFilterQuery, Result<IPagedList<DirectorInfoResponse>>>(query, cancellationToken);
+            var result = await _mediator.Query<DirectorFilterQuery, Result<IPagedList<DirectorTableResponse>>>(query, cancellationToken);
 
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
@@ -178,16 +175,21 @@ namespace MoviesAPIAdminModule.Controllers
                 response.HasPreviousPage
             };
 
-            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            Response.Headers["X-Pagination"] = JsonConvert.SerializeObject(metadata);
 
             return Ok(response);
         }
 
+        /// <summary>
+        /// Exclui um diretor pelo seu identificador (ID).
+        /// </summary>
+        /// <param name="id">O identificador único do diretor a ser excluído.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> que retorna 204 NoContent em caso de exclusão bem-sucedida; ou 404/500 em caso de erro.</returns>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Exclui um diretor por ID")]
         [OpenApiTag("Director")]
         public async Task<IActionResult> DeleteDirector(Guid id, CancellationToken cancellationToken)
         {

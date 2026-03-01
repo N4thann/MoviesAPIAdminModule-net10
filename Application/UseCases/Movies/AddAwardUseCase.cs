@@ -8,7 +8,7 @@ using Domain.ValueObjects;
 
 namespace Application.UseCases.Movies
 {
-    public class AddAwardUseCase : ICommandHandler<AddAwardCommand, Result<bool>>
+    public class AddAwardUseCase : ICommandHandler<AddAwardsToMovieCommand, Result<bool>>
     {
         private readonly IMovieRepository _movieRepository;
         private readonly IUnitOfWork _unitOfWork;
@@ -21,45 +21,39 @@ namespace Application.UseCases.Movies
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<Result<bool>> Handle(AddAwardCommand command, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(AddAwardsToMovieCommand command, CancellationToken cancellationToken)
         {
-            var movie = await _movieRepository.GetByIdWithAwardAsync(command.Id);
+            var movie = await _movieRepository.GetByIdWithAwardAsync(command.MovieId);
 
             if (movie is null)
-                return Result<bool>.AsFailure(Failure.NotFound("Filme", command.Id));
+                return Result<bool>.AsFailure(Failure.NotFound("Filme", command.MovieId));
 
-            AwardCategory? category;
-            Institution? institution;
+            var awardsToCreate = new List<Award>();
 
-            try
+            foreach (var item in command.Awards)
             {
-                category = AwardCategory.FromValue<AwardCategory>(command.CategoryId);
-                institution = Institution.FromValue<Institution>(command.InstitutionId);
+                try
+                {
+                    var category = AwardCategory.FromValue<AwardCategory>(item.CategoryId);
+                    var institution = Institution.FromValue<Institution>(item.InstitutionId);
+
+                    var awardResult = Award.Create(category, institution, item.Year);
+                    if (awardResult.IsFailure) return Result<bool>.AsFailure(awardResult.Failure!);
+
+                    awardsToCreate.Add(awardResult.Success!);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Result<bool>.AsFailure(Failure.Validation($"Erro ao processar prêmio: {ex.Message}"));
+                }
             }
-            catch (InvalidOperationException ex)
-            {
-                return Result<bool>.AsFailure(
-                    Failure.Validation($"Failed to resolve Smart Enum: {ex.Message}")
-                );
-            }
-            if (category is null || institution is null)
-                return Result<bool>.AsFailure(Failure.Validation(
-                    "Failed to resolve one or more Smart Enum values from the provided IDs."));
 
-            var awardResult = Award.Create(category, institution, command.Year);
-
-            if (awardResult.IsFailure)
-                return Result<bool>.AsFailure(awardResult.Failure!);
-
-            var newMovieImage = awardResult.Success!;
-
-            var domainResult = movie.AddAward(newMovieImage);
+            var domainResult = movie.AddAwards(awardsToCreate);
 
             if (domainResult.IsFailure)
                 return Result<bool>.AsFailure(domainResult.Failure!);
 
             await _unitOfWork.Commit(cancellationToken);
-
             return Result<bool>.AsSuccess(true);
         }
     }

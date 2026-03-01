@@ -8,6 +8,6 @@ namespace Application.DTOs.Request.Director
         public string? CountryName { get; init; }
         public int? AgeBegin { get; init; }
         public int? AgeEnd { get; init; }
-        public bool Active { get; init; } = true;
+        public bool? Active { get; init; } = true;
     }
 }

@@ -1,11 +1,14 @@
 ﻿using Application.Commands.Director;
 using Application.DTOs.Mappings;
 using Application.DTOs.Response;
+using Application.DTOs.Response.Directors;
+using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Domain.Entities;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Interfaces;
 using Domain.ValueObjects;
+using Mapster;
 
 namespace Application.UseCases.Directors
 {
@@ -43,7 +46,9 @@ namespace Application.UseCases.Directors
             _repository.Add(director!);
             await _unitOfWork.Commit(cancellationToken);
 
-            return director.ToDirectorDTO();
+            var response = director.Adapt<DirectorInfoResponse>();
+
+            return Result<DirectorInfoResponse>.AsSuccess(response);
         }
     }
 }

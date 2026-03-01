@@ -4,7 +4,5 @@ using Domain.SeedWork.Core;
 
 namespace Application.Queries.Director
 {
-    public record class GetDirectorByIdQuery(
-        Guid Id
-        ) : IQuery<Result<DirectorInfoResponse>>;
+    public record DetailsDirectorQuery(Guid Id) : IQuery<Result<DirectorDetailsResponse>>;
 }

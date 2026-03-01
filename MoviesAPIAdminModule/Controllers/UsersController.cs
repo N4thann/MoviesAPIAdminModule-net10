@@ -1,4 +1,4 @@
-ï»¿using Application.Commands.User;
+using Application.Commands.User;
 using Application.DTOs.Authentication;
 using Application.DTOs.Response;
 using Application.Interfaces.Mediator;
@@ -13,7 +13,7 @@ using NSwag.Annotations;
 namespace MoviesAPIAdminModule.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/users")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ServiceFilter(typeof(ApiLoggingFilter))]
     [Produces("application/json")]
     [ApiVersion("1.0")]
@@ -24,12 +24,16 @@ namespace MoviesAPIAdminModule.Controllers
 
         public UsersController(IMediator mediator) => _mediator = mediator;
 
+        /// <summary>
+        /// Lista todos os usuários registrados no sistema (requer permissão de administrador).
+        /// </summary>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> contendo uma coleção de usuários resumidos com status 200 OK em caso de sucesso; ou 401/403 em caso de autorização negada.</returns>
         [HttpGet]
         [Authorize(Policy = "AdminOnly")]
         [ProducesResponseType(typeof(IEnumerable<UserSummaryResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)] // Se o usuÃ¡rio nÃ£o for Admin
-        [OpenApiOperation("(Admin) Lista todos os usuÃ¡rios registrados no sistema.")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)] 
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
             var query = new GetAllUsersQuery();
@@ -41,12 +45,17 @@ namespace MoviesAPIAdminModule.Controllers
             return Ok(result.Success);
         }
 
+        /// <summary>
+        /// Cria uma nova conta de usuário no sistema com as credenciais fornecidas.
+        /// </summary>
+        /// <param name="request">Objeto contendo os dados de registro (username, email, senha, telefone).</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> que retorna 204 NoContent em caso de sucesso; ou 400/409/500 em caso de falha.</returns>
         [HttpPost("register")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Cria uma nova conta de usuÃ¡rio no sistema")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
         {
             var command = new RegisterCommand(request.UserName!, request.Email!, request.Password!, request.PhoneNumber);
@@ -59,12 +68,17 @@ namespace MoviesAPIAdminModule.Controllers
             return NoContent();
         }
 
-        [HttpPost("{username}/Revoke")]
+        /// <summary>
+        /// Invalida a sessão de um usuário, forçando-o a realizar um novo login (requer permissão específica).
+        /// </summary>
+        /// <param name="username">Nome de usuário cuja sessão será invalidada.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> que retorna 204 NoContent em caso de sucesso; ou 401/500 em caso de erro.</returns>
+        [HttpPost("revoke/{username}")]
         [Authorize(Policy = "ExclusivePolicyOnly")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("(Admin) Invalida a sessÃ£o de um usuÃ¡rio, forÃ§ando um novo login")]
         public async Task<IActionResult> Revoke(string username, CancellationToken cancellationToken)
         {
             var command = new RevokeByUsernameCommand(username);

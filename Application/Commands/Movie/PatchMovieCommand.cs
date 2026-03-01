@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Response;
+﻿using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Domain.SeedWork.Core;
 using Microsoft.AspNetCore.JsonPatch;

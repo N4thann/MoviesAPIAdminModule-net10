@@ -1,9 +1,10 @@
 ﻿using Application.Commands.Movie;
 using Application.DTOs.Request.Movie;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Application.Queries.Movie;
 using Asp.Versioning;
+using Domain.Enums;
 using Domain.SeedWork.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
@@ -17,8 +18,8 @@ using Pandorax.PagedList;
 namespace MoviesAPIAdminModule.Controllers
 {
     [ApiController]
-    [EnableCors("PoliticaCORS1")] //Usar [DisableCors] para desativar em algum método específico
-    [Route("api/v{version:apiVersion}/[controller]/[action]")]
+    [EnableCors("AllowMyClient")] //Usar [DisableCors] para desativar em algum método específico
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ServiceFilter(typeof(ApiLoggingFilter))]
     [Authorize(Policy = "AdminOnly")]
     [Produces("application/json")]
@@ -34,13 +35,18 @@ namespace MoviesAPIAdminModule.Controllers
         public MovieController(IMediator mediator) => _mediator = mediator;
 
         //[MapToApiVersion(2)] Utilizando para mapear o método action informando que apenas na versão 2 poderá ser acessado esse action
-        [HttpPost]
+        /// <summary>
+        /// Cria um novo filme usando os dados fornecidos na requisição.
+        /// </summary>
+        /// <param name="request">Objeto contendo os detalhes do filme a ser criado. Não deve ser nulo.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> representando o resultado da operação. Retorna 201 Created com as informações básicas do filme em caso de sucesso; caso contrário, retorna 400/404/409 ou 500 conforme aplicável.</returns>
+        [HttpPost("create")]
         [ProducesResponseType(typeof(MovieBasicInfoResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Cria um novo filme")]
         [OpenApiTag("Movies")]
         public async Task<IActionResult> CreateMovie([FromBody] CreateMovieRequest request, CancellationToken cancellationToken)
         {
@@ -97,12 +103,17 @@ namespace MoviesAPIAdminModule.Controllers
         //    return Ok(response);
         //}
 
-        [HttpGet("{id}")]
+        /// <summary>
+        /// Obtém um filme pelo seu identificador (ID).
+        /// </summary>
+        /// <param name="id">O identificador único do filme.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> com os dados básicos do filme e status 200 OK em caso de sucesso; ou 400/404/500 em caso de erro.</returns>
+        [HttpGet("GetMovieById/{id}")]
         [ProducesResponseType(typeof(MovieBasicInfoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Obtém um filme por ID")]
         [OpenApiTag("Movies")]
         public async Task<IActionResult> GetMovieById(Guid id, CancellationToken cancellationToken)
         {
@@ -118,43 +129,16 @@ namespace MoviesAPIAdminModule.Controllers
             return Ok(response);
         }
 
-        [HttpGet]
-        [ProducesResponseType(typeof(IPagedList<MovieBasicInfoResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Lista todos os filmes")]
-        [OpenApiTag("Movies")]
-        public async Task<IActionResult> GetAllPagination([FromQuery] MovieParametersRequest parameters, CancellationToken cancellationToken)
-        {
-            var query = new ListMoviesQuery(parameters);
-            var result = await _mediator.Query<ListMoviesQuery, Result<IPagedList<MovieBasicInfoResponse>>>(query, cancellationToken);
-
-            if (result.IsFailure)
-                return HandleFailure(result.Failure!);
-
-            var response = result.Success;
-
-            var metadata = new
-            {
-                response.Count,
-                response.PageSize,
-                response.PageIndex,
-                response.TotalPageCount,
-                response.TotalItemCount,
-                response.HasNextPage,
-                response.HasPreviousPage
-            };
-
-            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
-
-            return Ok(response);
-        }
-
+        /// <summary>
+        /// Lista filmes aplicando filtros e paginação conforme os parâmetros fornecidos.
+        /// </summary>
+        /// <param name="request">Objeto de filtro com critérios como título, diretor, estúdio, país e faixa de ano de lançamento.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> com uma lista paginada de filmes filtrados e status 200 OK em caso de sucesso; ou 400/500 em caso de erro.</returns>
         [HttpGet("filtered")]
-        [ProducesResponseType(typeof(IPagedList<MovieBasicInfoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IPagedList<MovieTableResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Lista filmes com filtros e paginação")]
         [OpenApiTag("Movies")]
         public async Task<IActionResult> GetFilteredMovies([FromQuery] MovieBasicFilterRequest request, CancellationToken cancellationToken)
         {
@@ -164,13 +148,11 @@ namespace MoviesAPIAdminModule.Controllers
                 request.CountryName,
                 request.ReleaseYearBegin,
                 request.ReleaseYearEnd,
-                request.DirectorName,
-                request.StudioName,
-                request.GenreName,
+                request.Active,
                 request
                 );
 
-            var result = await _mediator.Query<MovieBasicFilterQuery, Result<IPagedList<MovieBasicInfoResponse>>>(query, cancellationToken);
+            var result = await _mediator.Query<MovieBasicFilterQuery, Result<IPagedList<MovieTableResponse>>>(query, cancellationToken);
 
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
@@ -188,16 +170,21 @@ namespace MoviesAPIAdminModule.Controllers
                 response.HasPreviousPage
             };
 
-            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            Response.Headers["X-Pagination"] = JsonConvert.SerializeObject(metadata);
 
             return Ok(response);
         }
 
-        [HttpDelete("{id}")]
+        /// <summary>
+        /// Exclui um filme pelo seu identificador (ID).
+        /// </summary>
+        /// <param name="id">O identificador único do filme a ser excluído.</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> que retorna 204 NoContent em caso de exclusão bem-sucedida; ou 404/500 em caso de erro.</returns>
+        [HttpDelete("delete/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Exclui um filme por ID")]
         [OpenApiTag("Movies")]
         public async Task<IActionResult> DeleteMovie(Guid id, CancellationToken cancellationToken)
         {
@@ -211,24 +198,25 @@ namespace MoviesAPIAdminModule.Controllers
             return NoContent();
         }
 
-        [HttpPost("{Id}")]
+        /// <summary>
+        /// Adiciona múltiplos prêmios a um filme de uma só vez
+        /// </summary>
+        /// <param name="id">O identificador único do filme que receberá o prêmio.</param>
+        /// <param name="request">Objeto contendo uma lista com os dados dos prêmios (categoria, instituição, ano).</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> que retorna 204 NoContent em caso de sucesso; ou 400/404/409/500 em caso de erro.</returns>
+        [HttpPost("addAwardsToMovie/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Adiciona um prêmio ao filme")]
         [OpenApiTag("Movies")]
-        public async Task<IActionResult> AddAwardToMovie(Guid Id, [FromBody] AwardRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> AddAwardsToMovie(Guid id, [FromBody] AddAwardsToMovieRequest request, CancellationToken cancellationToken)
         {
-            var command = new AddAwardCommand(
-                Id,
-                request.CategoryId,
-                request.InstitutionId,
-                request.Year
-                );
+            var command = new AddAwardsToMovieCommand(id, request.Awards);
 
-            var result = await _mediator.Send<AddAwardCommand, Result<bool>>(command, cancellationToken);
+            var result = await _mediator.Send<AddAwardsToMovieCommand, Result<bool>>(command, cancellationToken);
 
             if (result.IsFailure)
                 return HandleFailure(result.Failure!);
@@ -237,13 +225,19 @@ namespace MoviesAPIAdminModule.Controllers
         }
 
 
-        [HttpPost("{Id}")]
+        /// <summary>
+        /// Envia uma imagem para o filme (Poster, Thumbnail ou Gallery).
+        /// </summary>
+        /// <param name="Id">O identificador único do filme que receberá a imagem.</param>
+        /// <param name="request">Dados do arquivo de imagem e metadados (tipo de imagem, altText).</param>
+        /// <param name="cancellationToken">Token que pode ser usado para cancelar a operação.</param>
+        /// <returns>Um <see cref="IActionResult"/> que retorna 201 Created com o caminho/identificador da imagem em caso de sucesso; ou 400/404/409/500 em caso de erro.</returns>
+        [HttpPost("uploadImage/{Id}")]
         [ProducesResponseType(typeof(string), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Failure), StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [OpenApiOperation("Adiciona uma imagem que pode ser do tipo Poster, Thumbnail ou Gallery ao filme")]
         [OpenApiTag("Movies")]
         public async Task<IActionResult> UploadImage(Guid Id, [FromForm] UploadImageRequest request, CancellationToken cancellationToken)
         {
@@ -268,7 +262,10 @@ namespace MoviesAPIAdminModule.Controllers
 
             var response = result.Success;
 
-            return Ok(response);
+            if (response == null)
+                return HandleFailure(Failure.Unknown);
+
+            return Created(string.Empty, response);
         }
     }
 }

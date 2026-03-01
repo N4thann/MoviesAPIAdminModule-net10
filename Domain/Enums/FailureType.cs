@@ -8,6 +8,7 @@
         NotFound,           // 404
         Conflict,           // 409
         InternalServer,     // 500
-        Infrastructure      // 500
+        Infrastructure,      // 500
+        Unknown             // 500
     }
 }

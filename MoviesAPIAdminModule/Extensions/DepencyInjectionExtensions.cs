@@ -1,4 +1,6 @@
-﻿using Application.Interfaces;
+﻿using Application.Common;
+using Application.DTOs.Mappings;
+using Application.Interfaces;
 using Application.Interfaces.Mediator;
 using Domain.Identity;
 using Domain.SeedWork.Interfaces;
@@ -7,6 +9,7 @@ using Infraestructure.Mediator;
 using Infraestructure.Persistence;
 using Infraestructure.Repository;
 using Infraestructure.Service;
+using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -23,6 +26,16 @@ namespace MoviesAPIAdminModule.Extensions
     {
         public static IServiceCollection AddWebApiServices(this IServiceCollection services, IConfiguration configuration)
         {
+            #region CONFIG OPTIONS
+            var jwtSection = configuration.GetSection(JwtOptions.JWT);
+            services.Configure<JwtOptions>(jwtSection);
+
+            var jwtOptions = jwtSection.Get<JwtOptions>();
+
+            if (jwtOptions == null || string.IsNullOrEmpty(jwtOptions.SecretKey))
+                throw new ArgumentException("JWT Configuration is missing or invalid in appsettings.json");
+            #endregion
+
             #region CORS
             var nomeDaPoliticaCORS = "AllowMyClient";
 
@@ -33,15 +46,13 @@ namespace MoviesAPIAdminModule.Extensions
                     {
                         policy.WithOrigins("http://localhost:5173") 
                               .AllowAnyHeader() 
-                              .AllowAnyMethod(); 
+                              .AllowAnyMethod() 
+                              .WithExposedHeaders("X-Pagination");
                     });
             });
-
             #endregion
 
             #region AUTENTICAÇÃO JWT
-            var secretKey = configuration["JWT:SecretKey"] ?? throw new ArgumentException("Invalid secret key!!");
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -57,9 +68,9 @@ namespace MoviesAPIAdminModule.Extensions
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     ClockSkew = TimeSpan.Zero,
-                    ValidAudience = configuration["JWT:ValidAudience"],
-                    ValidIssuer = configuration["JWT:ValidIssuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                    ValidAudience = jwtOptions.ValidAudience,
+                    ValidIssuer = jwtOptions.ValidIssuer,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
                 };
             });
             #endregion
@@ -181,6 +192,9 @@ namespace MoviesAPIAdminModule.Extensions
             services.AddScoped<IMovieRepository, MovieRepository>();
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            var config = TypeAdapterConfig.GlobalSettings;
+            config.Scan(typeof(MappingRegistration).Assembly);
 
             return services;
         }

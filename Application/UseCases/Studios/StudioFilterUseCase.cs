@@ -1,42 +1,50 @@
 ﻿using Application.Common;
 using Application.DTOs.Mappings;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Directors;
+using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Application.Queries.Studio;
 using Domain.Entities;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Interfaces;
+using Mapster;
 using Pandorax.PagedList;
 using Pandorax.PagedList.EntityFrameworkCore;
+using System.Linq;
 
 namespace Application.UseCases.Studios
 {
-    public class StudioFilterUseCase : IQueryHandler<StudioFilterQuery, Result<IPagedList<StudioInfoResponse>>>
+    public class StudioFilterUseCase : IQueryHandler<StudioFilterQuery, Result<IPagedList<StudioTableResponse>>>
     {
         private readonly IRepository<Studio> _repository;
 
         public StudioFilterUseCase(IRepository<Studio> repository) => _repository = repository;
 
-        public async Task<Result<IPagedList<StudioInfoResponse>>> Handle(StudioFilterQuery query, CancellationToken cancellationToken)
+        public async Task<Result<IPagedList<StudioTableResponse>>> Handle(StudioFilterQuery query, CancellationToken cancellationToken)
         {
-            var studios = _repository.GetAllQueryable();
+            var queryable = _repository.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(query.Name))
-                studios = studios.Where(s => s.Name.Contains(query.Name));
+                queryable = queryable.Where(s => s.Name.Contains(query.Name));
+
             if (!string.IsNullOrWhiteSpace(query.CountryName))
-                studios = studios.Where(s => s.Country.Name.Contains(query.CountryName));
+                queryable = queryable.Where(s => s.Country.Name.Contains(query.CountryName));
+
+            if (query.Active.HasValue)
+                queryable = queryable.Where(d => d.IsActive == query.Active.Value);
+
             if (query.FoundationYearBegin.HasValue)
-                studios = studios.Where(s => s.FoundationDate.Year >= query.FoundationYearBegin.Value);
+                queryable = queryable.Where(s => s.FoundationDate.Year >= query.FoundationYearBegin.Value);
+
             if (query.FoundationYearEnd.HasValue)
-                studios = studios.Where(s => s.FoundationDate.Year <= query.FoundationYearEnd.Value);
+                queryable = queryable.Where(s => s.FoundationDate.Year <= query.FoundationYearEnd.Value);
 
-            studios = studios.Where(s => s.IsActive == query.Active);
+            var studioPaged = await queryable
+                .OrderBy(m => m.Name)
+                .ProjectToType<StudioTableResponse>()
+                .ToPagedListAsync(query.Parameters.PageNumber, query.Parameters.PageSize, cancellationToken);
 
-            studios = studios.OrderBy(s => s.Name);
-
-            var studiosPaged = await studios.ToPagedListAsync(query.Parameters.PageNumber, query.Parameters.PageSize, cancellationToken);
-
-            return studiosPaged.ToStudioPagedListDTO();
+            return Result<IPagedList<StudioTableResponse>>.AsSuccess(studioPaged);
         }
     }
 }

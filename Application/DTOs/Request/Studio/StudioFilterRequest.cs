@@ -8,6 +8,6 @@ namespace Application.DTOs.Request.Studio
         public string? CountryName { get; init; }
         public int? FoundationYearBegin { get; init; }
         public int? FoundationYearEnd { get; init; }  
-        public bool Active { get; init; } = true;
+        public bool? Active { get; init; } = true;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Application.Commands.Authentication;
+using Application.Common;
 using Application.DTOs.Response;
 using Application.Interfaces;
 using Application.Interfaces.Mediator;
@@ -6,31 +7,29 @@ using Domain.Enums;
 using Domain.Identity;
 using Domain.SeedWork.Core;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+
 
 namespace Application.UseCases.Authentication
 {
     public class LoginUseCase : ICommandHandler<LoginCommand, Result<TokenResponse>>
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ITokenService _tokenService;
-        private readonly IConfiguration _configuration;
+        private readonly JwtOptions _jwtOptions;
 
         private readonly List<string> _adminRoles = new() { "Admin", "SuperAdmin" };
 
         public LoginUseCase(
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager,
             ITokenService tokenService,
-            IConfiguration configuration)
+            IOptions<JwtOptions> jwtOptions)
         {
             _userManager = userManager;
-            _roleManager = roleManager;
             _tokenService = tokenService;
-            _configuration = configuration;
+            _jwtOptions = jwtOptions.Value;
         }
 
         public async Task<Result<TokenResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
@@ -62,19 +61,10 @@ namespace Application.UseCases.Authentication
                 authClaims.Add(new Claim(ClaimTypes.Role, userRole));
             }
 
-            var token = _tokenService.GenerateAccessToken(authClaims, _configuration);
+            var token = _tokenService.GenerateAccessToken(authClaims, _jwtOptions);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
-            if (!int.TryParse(_configuration["JWT:RefreshTokenValidityInMinutes"],
-                                out int refreshTokenValidityInMinutes))
-            {
-                return Result<TokenResponse>.AsFailure(
-                    Failure.Infrastructure("Configuration error: 'JWT:RefreshTokenValidityInMinutes' is missing or invalid.")
-                );
-            }
-
-            user.RefreshTokenExpiryTime = DateTime.Now.AddMinutes(refreshTokenValidityInMinutes);
-
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtOptions.RefreshTokenValidityInMinutes);
             user.RefreshToken = refreshToken;
 
             var updateResult = await _userManager.UpdateAsync(user);
@@ -82,7 +72,6 @@ namespace Application.UseCases.Authentication
             if(!updateResult.Succeeded)
             {
                var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
-
                return Result<TokenResponse>.AsFailure(Failure.Infrastructure($"Failed to save refresh token: {errors}"));
             }
 

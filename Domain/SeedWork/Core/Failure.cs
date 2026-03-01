@@ -12,6 +12,7 @@ namespace Domain.SeedWork.Core
             FailureType.Forbidden => 403,
             FailureType.NotFound => 404,
             FailureType.Conflict => 409,
+            FailureType.Unknown => 520, // Web Server Returned an Unknown Error
             _ => 500 // InternalServer e Infrastructure
         };
 
@@ -19,6 +20,7 @@ namespace Domain.SeedWork.Core
         public static readonly Failure InternalServerError = new(FailureType.InternalServer, "An unexpected internal server error occurred.");
         public static readonly Failure InvalidCredentials = new(FailureType.Unauthorized, "Invalid username or password.");
         public static readonly Failure TokenExpired = new(FailureType.Unauthorized, "The provided token has expired.");
+        public static readonly Failure Unknown = new(FailureType.Unknown, "An unknown error occurred.");
 
         // Métodos de fábrica para erros dinâmicos
         public static Failure Validation(string message) => new(FailureType.Validation, message);

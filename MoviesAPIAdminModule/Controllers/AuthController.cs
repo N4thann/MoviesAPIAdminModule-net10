@@ -12,7 +12,7 @@ using NSwag.Annotations;
 namespace MoviesAPIAdminModule.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/auth")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [EnableCors("AllowMyClient")]
     [ServiceFilter(typeof(ApiLoggingFilter))]
     [Produces("application/json")]
@@ -48,7 +48,7 @@ namespace MoviesAPIAdminModule.Controllers
         [OpenApiOperation("Emite um novo token de acesso utilizando um token de atualização válido")]
         public async Task<IActionResult> RefreshToken(TokenRequest request, CancellationToken cancellationToken)
         {
-            var command = new RefreshTokenCommand(request.AccessToken, request.RefreshToken);
+            var command = new RefreshTokenCommand(request.AccessToken!, request.RefreshToken!);
 
             var result = await _mediator.Send<RefreshTokenCommand, Result<TokenResponse>>(command, cancellationToken);
 

@@ -1,11 +1,13 @@
 ﻿using Application.Commands.Movie;
 using Application.DTOs.Mappings;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Directors;
+using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Domain.Entities;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Interfaces;
 using Domain.ValueObjects;
+using Mapster;
 
 namespace Application.UseCases.Movies
 {
@@ -72,7 +74,9 @@ namespace Application.UseCases.Movies
             _repositoryMovie.Add(movie);
             await _unitOfWork.Commit(cancellationToken);
 
-            return movie.ToMovieDTO()!;
+            var response = movie.Adapt<MovieBasicInfoResponse>();
+
+            return Result<MovieBasicInfoResponse>.AsSuccess(response);
         }
     }
 }

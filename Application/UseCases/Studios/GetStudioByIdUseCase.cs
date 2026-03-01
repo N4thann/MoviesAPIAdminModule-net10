@@ -1,10 +1,11 @@
 ﻿using Application.DTOs.Mappings;
-using Application.DTOs.Response;
+using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Application.Queries.Studio;
 using Domain.Entities;
 using Domain.SeedWork.Core;
 using Domain.SeedWork.Interfaces;
+using Mapster;
 
 namespace Application.UseCases.Studios
 {
@@ -21,7 +22,9 @@ namespace Application.UseCases.Studios
             if (studio == null)
                 return Result<StudioInfoResponse>.AsFailure(Failure.NotFound("Studio", query.Id));
 
-            return studio.ToStudioDTO();
+            var response = studio.Adapt<StudioInfoResponse>();
+
+            return Result<StudioInfoResponse>.AsSuccess(response);
         }
     }
 }
