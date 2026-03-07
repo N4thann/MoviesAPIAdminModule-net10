@@ -6,9 +6,9 @@ namespace Domain.ValueObjects
 {
     public class Genre : ValueObject
     {
-        public Genre() { }
+        private Genre() { }
 
-        public Genre(string name, string description)
+        private Genre(string name, string description)
         {
             Name = name.Trim();
             Description = description.Trim();
@@ -33,8 +33,8 @@ namespace Domain.ValueObjects
             return Result<Genre>.AsSuccess(genre);
         }
 
-        public string Name { get; private set; }
-        public string Description { get; private set; }
+        public string Name { get; private set; } = null!;
+        public string Description { get; private set; } = null!;
 
         protected override IEnumerable<object> GetEqualityComponents()
         {

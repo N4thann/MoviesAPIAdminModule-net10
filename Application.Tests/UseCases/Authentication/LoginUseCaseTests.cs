@@ -19,7 +19,7 @@ namespace Application.Tests.UseCases.Authentication
         private readonly LoginUseCase _sut;
         private readonly UserManager<ApplicationUser> _subUserManager;
         private readonly ITokenService _subTokenService;
-        private readonly IOptions<JwtOptions> _subJwtOptions; // Mudou aqui
+        private readonly IOptions<JwtOptions> _subJwtOptions;
 
         private readonly Faker _faker;
         private readonly ApplicationUser _validUser;
@@ -30,22 +30,18 @@ namespace Application.Tests.UseCases.Authentication
         {
             _faker = new Faker("pt_BR");
 
-            // 1. Setup do UserManager (Mock complexo do Identity)
+            // Setup Mocks
             var subUserStore = Substitute.For<IUserStore<ApplicationUser>>();
             _subUserManager = Substitute.For<UserManager<ApplicationUser>>(
-                subUserStore, null, null, null, null, null, null, null, null);
+                subUserStore, null!, null!, null!, null!, null!, null!, null!, null!);
 
             _subTokenService = Substitute.For<ITokenService>();
 
-            // 2. Setup do Options Pattern
-            _fakeJwtOptions = new JwtOptions
-            {
-                RefreshTokenValidityInMinutes = 60,
-                // Adicione outras propriedades do seu JwtOptions se necessário
-            };
+            _fakeJwtOptions = new JwtOptions { RefreshTokenValidityInMinutes = 60 };
             _subJwtOptions = Substitute.For<IOptions<JwtOptions>>();
             _subJwtOptions.Value.Returns(_fakeJwtOptions);
 
+            // Setup Data
             _loginCommand = new LoginCommand(
                 UserName: _faker.Random.String2(8, "abcdefghijklmnopqrstuvwxyz"),
                 Password: $"P@ss{_faker.Random.Number(99)}w{_faker.Lorem.Letter()}!"
@@ -59,29 +55,35 @@ namespace Application.Tests.UseCases.Authentication
                 RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7)
             };
 
-            // 3. SUT com o novo construtor
-            _sut = new LoginUseCase(
-                _subUserManager,
-                _subTokenService,
-                _subJwtOptions
-            );
+            _sut = new LoginUseCase(_subUserManager, _subTokenService, _subJwtOptions);
         }
+
+        #region Helper Methods (Redução de Duplicação/Sonar)
+
+        private void SetupUserFlow(bool passwordValid, List<string> roles)
+        {
+            _subUserManager.FindByNameAsync(_loginCommand.UserName).Returns(_validUser);
+            _subUserManager.CheckPasswordAsync(_validUser, _loginCommand.Password).Returns(passwordValid);
+            _subUserManager.GetRolesAsync(_validUser).Returns(roles);
+        }
+
+        private void SetupTokenService(string refreshToken, DateTime expiration)
+        {
+            var fakeJwtToken = new JwtSecurityToken(expires: expiration);
+            _subTokenService.GenerateAccessToken(Arg.Any<List<Claim>>(), _fakeJwtOptions).Returns(fakeJwtToken);
+            _subTokenService.GenerateRefreshToken().Returns(refreshToken);
+        }
+
+        #endregion
 
         [Fact]
         public async Task Handle_WhenCredentialsAreValid_ShouldReturnSuccessTokenResponse()
         {
-            // Arrange
-            var userRoles = new List<string> { "Admin" };
             var fakeRefreshToken = _faker.Random.AlphaNumeric(32);
             var fakeExpiration = DateTime.UtcNow.AddHours(1);
-            var fakeJwtToken = new JwtSecurityToken(expires: fakeExpiration);
 
-            _subUserManager.FindByNameAsync(_loginCommand.UserName).Returns(_validUser);
-            _subUserManager.CheckPasswordAsync(_validUser, _loginCommand.Password).Returns(true);
-            _subUserManager.GetRolesAsync(_validUser).Returns(userRoles);
-
-            _subTokenService.GenerateAccessToken(Arg.Any<List<Claim>>(), _fakeJwtOptions).Returns(fakeJwtToken);
-            _subTokenService.GenerateRefreshToken().Returns(fakeRefreshToken);
+            SetupUserFlow(passwordValid: true, roles: new List<string> { "Admin" });
+            SetupTokenService(fakeRefreshToken, fakeExpiration);
             _subUserManager.UpdateAsync(_validUser).Returns(IdentityResult.Success);
 
             // Act
@@ -89,7 +91,7 @@ namespace Application.Tests.UseCases.Authentication
 
             // Assert
             result.IsSuccess.Should().BeTrue();
-            result.Success.RefreshToken.Should().Be(fakeRefreshToken);
+            result.Success!.RefreshToken.Should().Be(fakeRefreshToken);
             _validUser.RefreshToken.Should().Be(fakeRefreshToken);
         }
 
@@ -97,30 +99,22 @@ namespace Application.Tests.UseCases.Authentication
         public async Task Handle_WhenUserHasNoRequiredRole_ShouldReturnForbiddenFailure()
         {
             // Arrange
-            var userRoles = new List<string> { "User" }; // Role que não está na lista _adminRoles do UseCase
-            _subUserManager.FindByNameAsync(_loginCommand.UserName).Returns(_validUser);
-            _subUserManager.CheckPasswordAsync(_validUser, _loginCommand.Password).Returns(true);
-            _subUserManager.GetRolesAsync(_validUser).Returns(userRoles);
+            SetupUserFlow(passwordValid: true, roles: new List<string> { "User" });
 
             // Act
             var result = await _sut.Handle(_loginCommand, CancellationToken.None);
 
             // Assert
             result.IsFailure.Should().BeTrue();
-            result.Failure.Type.Should().Be(FailureType.Forbidden);
+            result.Failure!.Type.Should().Be(FailureType.Forbidden);
         }
 
         [Fact]
         public async Task Handle_WhenUpdateAsyncFails_ShouldReturnInfrastructureFailure()
         {
             // Arrange
-            var userRoles = new List<string> { "Admin" };
-            var fakeJwtToken = new JwtSecurityToken(expires: DateTime.UtcNow.AddHours(1));
-            _subUserManager.FindByNameAsync(_loginCommand.UserName).Returns(_validUser);
-            _subUserManager.CheckPasswordAsync(_validUser, _loginCommand.Password).Returns(true);
-            _subUserManager.GetRolesAsync(_validUser).Returns(userRoles);
-            _subTokenService.GenerateAccessToken(Arg.Any<List<Claim>>(), _fakeJwtOptions).Returns(fakeJwtToken);
-            _subTokenService.GenerateRefreshToken().Returns("token");
+            SetupUserFlow(passwordValid: true, roles: new List<string> { "Admin" });
+            SetupTokenService("token", DateTime.UtcNow.AddHours(1));
 
             var updateError = new IdentityError { Description = "DB Error" };
             _subUserManager.UpdateAsync(_validUser).Returns(IdentityResult.Failed(updateError));
@@ -130,7 +124,7 @@ namespace Application.Tests.UseCases.Authentication
 
             // Assert
             result.IsFailure.Should().BeTrue();
-            result.Failure.Message.Should().Contain("Failed to save refresh token");
+            result.Failure!.Message.Should().Contain("Failed to save refresh token");
         }
     }
 }

@@ -1,7 +1,4 @@
-﻿using Application.Common;
-using Application.DTOs.Mappings;
-using Application.DTOs.Response.Directors;
-using Application.DTOs.Response.Studios;
+﻿using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Application.Queries.Studio;
 using Domain.Entities;
@@ -10,7 +7,6 @@ using Domain.SeedWork.Interfaces;
 using Mapster;
 using Pandorax.PagedList;
 using Pandorax.PagedList.EntityFrameworkCore;
-using System.Linq;
 
 namespace Application.UseCases.Studios
 {

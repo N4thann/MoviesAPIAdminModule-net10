@@ -7,7 +7,8 @@ namespace Domain.ValueObjects
 {
     public class Money : ValueObject
     {
-        public Money() { }
+        // EF Core utiliza o construtor vazio via reflexão para depois preencher as propriedades
+        private Money() { }
 
         private Money(decimal amount, string currency) 
         {
@@ -32,7 +33,7 @@ namespace Domain.ValueObjects
 
         public decimal Amount { get; private set; }
 
-        public string Currency { get; private set; }
+        public string Currency { get; private set; } = null!;
 
         protected override IEnumerable<object> GetEqualityComponents()
         {

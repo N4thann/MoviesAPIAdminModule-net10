@@ -1,8 +1,5 @@
 ﻿using Application.Commands.Director;
-using Application.DTOs.Mappings;
-using Application.DTOs.Response;
 using Application.DTOs.Response.Directors;
-using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Domain.Entities;
 using Domain.SeedWork.Core;

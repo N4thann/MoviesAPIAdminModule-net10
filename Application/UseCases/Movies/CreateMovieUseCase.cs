@@ -1,6 +1,4 @@
 ﻿using Application.Commands.Movie;
-using Application.DTOs.Mappings;
-using Application.DTOs.Response.Directors;
 using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Domain.Entities;

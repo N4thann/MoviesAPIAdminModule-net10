@@ -7,9 +7,12 @@ namespace Domain.ValueObjects
 {
     public class MovieImage : ValueObject
     {
-        public MovieImage() { }
+        private MovieImage()
+        {
+            Url = null!;
+        }
 
-        private MovieImage(string url, string altText, ImageType type)
+        private MovieImage(string url, string? altText, ImageType type)
         {
             Id = Guid.NewGuid();
             Url = url;
@@ -17,7 +20,7 @@ namespace Domain.ValueObjects
             Type = type;
         }
 
-        public static Result<MovieImage> Create(string url, string altText = null, ImageType type = ImageType.Gallery)
+        public static Result<MovieImage> Create(string url, string? altText = null, ImageType type = ImageType.Gallery)
         {
             var validation1 = Validate.NotNullOrEmpty(url, nameof(url));
             var validation2 = Validate.IsValidUrl(url, nameof(url));
@@ -41,7 +44,7 @@ namespace Domain.ValueObjects
 
         public Guid Id { get; private set; }
         public string Url { get; private set; }
-        public string AltText { get; private set; }
+        public string? AltText { get; private set; }
         public ImageType Type { get; private set; }
 
         protected override IEnumerable<object> GetEqualityComponents()

@@ -1,19 +1,16 @@
 ﻿using Application.Commands.Movie;
 using Application.DTOs.Request.Movie;
 using Application.DTOs.Response;
-using Application.DTOs.Response.Directors;
 using Application.DTOs.Response.Movies;
 using Application.Interfaces.Mediator;
 using Application.Queries.Movie;
 using Asp.Versioning;
-using Domain.Enums;
 using Domain.SeedWork.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using MoviesAPIAdminModule.Filters;
-using Newtonsoft.Json;
 using NSwag.Annotations;
 using Pandorax.PagedList;
 
@@ -37,7 +34,6 @@ namespace MoviesAPIAdminModule.Controllers
 
         public MovieController(IMediator mediator) => _mediator = mediator;
 
-        //[MapToApiVersion(2)] Utilizando para mapear o método action informando que apenas na versão 2 poderá ser acessado esse action
         /// <summary>
         /// Cria um novo filme usando os dados fornecidos na requisição.
         /// </summary>

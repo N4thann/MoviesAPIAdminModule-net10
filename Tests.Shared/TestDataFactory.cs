@@ -125,7 +125,7 @@ namespace Tests.Shared
 
             var awardResult = Award.Create(AwardCategory.BestOriginalScreenplay, Institution.AcademyAwards, 2011);
             if (awardResult.IsSuccess)
-                movie.AddAward(awardResult.Success!);
+                movie.AddAwards(new List<Award> { awardResult.Success! });
 
             var imageUrl = $"https://localhost:7211/StaticFiles/Images/inception-{movie.Id}/inception_2010_poster.jpg";
             var imageResult = MovieImage.Create(imageUrl, "Official movie poster", MovieImage.ImageType.Poster);
@@ -177,7 +177,7 @@ namespace Tests.Shared
             var awardResult = Award.Create(AwardCategory.BestSupportingActor, Institution.AcademyAwards, 2009);
 
             if (awardResult.IsSuccess)
-                movie.AddAward(awardResult.Success!);
+                movie.AddAwards(new List<Award> { awardResult.Success! });
 
             var imageUrl = $"https://localhost:7211/StaticFiles/Images/the-dark-knight-{movie.Id}/the-dark-knight_2008_poster.jpg";
             var imageResult = MovieImage.Create(imageUrl, "Official movie poster for The Dark Knight", MovieImage.ImageType.Poster);

@@ -9,7 +9,7 @@ namespace Application.UseCases.Uses
     public class RegisterUseCase : ICommandHandler<RegisterCommand, Result<bool>>
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager; //Caso tenha alguma implementação futura
+        private readonly RoleManager<IdentityRole> _roleManager;
 
         public RegisterUseCase(
             UserManager<ApplicationUser> userManager,
@@ -48,9 +48,7 @@ namespace Application.UseCases.Uses
             }
 
             if (!await _roleManager.RoleExistsAsync("Admin"))
-            {
                 await _roleManager.CreateAsync(new IdentityRole("Admin"));
-            }
 
             var roleResult = await _userManager.AddToRoleAsync(user, "Admin");
 

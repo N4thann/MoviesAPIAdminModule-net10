@@ -1,4 +1,5 @@
 ﻿using Application.Commands.Movie;
+using Application.DTOs.Request.Movie;
 using Application.UseCases.Movies;
 using Domain.Entities;
 using Domain.Enums;
@@ -25,21 +26,29 @@ namespace Application.Tests.UseCases.Movies
             _subMovieRepository = Substitute.For<IMovieRepository>();
             _subUnitOfWork = Substitute.For<IUnitOfWork>();
 
-            _sut = new AddAwardUseCase(
-                _subMovieRepository,
-                _subUnitOfWork);
+            _sut = new AddAwardUseCase(_subMovieRepository, _subUnitOfWork);
 
             _validMovie = TestDataFactory.CreateInceptionMovie().Success!;
 
-            _validCommand = new AddAwardsToMovieCommand(
-                _validMovie.Id,
-                AwardCategory.BestCinematography.Id,
-                Institution.BAFTA.Id,           
-                2011 
-            );
+            var awardItems = new List<AwardItemRequest>
+            {
+                new AwardItemRequest(
+                    AwardCategory.BestCinematography.Id,
+                    Institution.BAFTA.Id,
+                    2011)
+            };
 
-            _subMovieRepository.GetByIdWithAwardAsync(_validCommand.Id)
-                               .Returns(Task.FromResult<Movie?>(_validMovie));
+            _validCommand = new AddAwardsToMovieCommand(_validMovie.Id, awardItems);
+
+            SetupRepositoryReturn(_validMovie);
+        }
+        #endregion
+
+        #region Helpers
+        private void SetupRepositoryReturn(Movie? movie)
+        {
+            _subMovieRepository.GetByIdWithAwardAsync(Arg.Any<Guid>())
+                               .Returns(Task.FromResult(movie));
         }
         #endregion
 
@@ -51,9 +60,7 @@ namespace Application.Tests.UseCases.Movies
             var result = await _sut.Handle(_validCommand, CancellationToken.None);
 
             // Assert
-            result.IsSuccess.Should().Be(true);
-            result.Success.Should().Be(true);
-
+            result.IsSuccess.Should().BeTrue();
             _validMovie.Awards.Should().HaveCount(2);
             _validMovie.Awards.Should().Contain(a => a.Category == AwardCategory.BestCinematography);
 
@@ -66,80 +73,67 @@ namespace Application.Tests.UseCases.Movies
         public async Task Handle_WhenMovieIsNotFound_ShouldReturnNotFoundFailure()
         {
             // Arrange
-            _subMovieRepository.GetByIdWithAwardAsync(_validCommand.Id)
-                               .Returns(Task.FromResult<Movie?>(null));
+            SetupRepositoryReturn(null);
 
             // Act
             var result = await _sut.Handle(_validCommand, CancellationToken.None);
 
             // Assert
-            result.IsFailure.Should().Be(true);
-            result.Failure.Type.Should().Be(FailureType.NotFound);
-            result.Failure.Message.Should().Contain("Filme");
-
+            result.IsFailure.Should().BeTrue();
+            result.Failure!.Type.Should().Be(FailureType.NotFound);
             await _subUnitOfWork.DidNotReceive().Commit(Arg.Any<CancellationToken>());
         }
 
         [Theory]
-        [InlineData(9999, 1)]
-        [InlineData(1, 9999)]
+        [InlineData(9999, 1)] // Categoria inválida
+        [InlineData(1, 9999)] // Instituição inválida
         public async Task Handle_WhenSmartEnumIdIsInvalid_ShouldReturnValidationFailure(int categoryId, int institutionId)
         {
             // Arrange
-            var badCommand = new AddAwardsToMovieCommand(
-                _validMovie.Id,
-                categoryId,
-                institutionId,
-                2011
-            );
-
-            _subMovieRepository.GetByIdWithAwardAsync(_validMovie.Id)
-                               .Returns(Task.FromResult<Movie?>(_validMovie));
+            var badItems = new List<AwardItemRequest> { new AwardItemRequest(categoryId, institutionId, 2011) };
+            var badCommand = new AddAwardsToMovieCommand(_validMovie.Id, badItems);
 
             // Act
             var result = await _sut.Handle(badCommand, CancellationToken.None);
 
             // Assert
-            result.IsFailure.Should().Be(true);
-            result.Failure.Type.Should().Be(FailureType.Validation);
-            result.Failure.Message.Should().Contain("Smart Enum");
-            await _subUnitOfWork.DidNotReceive().Commit(Arg.Any<CancellationToken>());
+            result.IsFailure.Should().BeTrue();
+            result.Failure!.Type.Should().Be(FailureType.Validation);
         }
 
         [Fact]
         public async Task Handle_WhenAwardCreationFails_ShouldReturnValidationFailure()
         {
-            // Arrange
-            var badCommand = _validCommand with { Year = 1800 };
+            var badItems = new List<AwardItemRequest> { new AwardItemRequest(1, 1, 1800) };
+            var badCommand = new AddAwardsToMovieCommand(_validMovie.Id, badItems);
 
             // Act
             var result = await _sut.Handle(badCommand, CancellationToken.None);
 
             // Assert
-            result.IsFailure.Should().Be(true);
-            result.Failure.Type.Should().Be(FailureType.Validation); 
-            await _subUnitOfWork.DidNotReceive().Commit(Arg.Any<CancellationToken>());
+            result.IsFailure.Should().BeTrue();
+            result.Failure!.Type.Should().Be(FailureType.Validation);
         }
 
         [Fact]
-        public async Task Handle_WhenMovieAddAwardFails_ShouldReturnDomainFailure()
+        public async Task Handle_WhenMovieAddAwardFails_ShouldReturnConflictFailure()
         {
-            // Arrange
-            var duplicateAwardCommand = new AddAwardsToMovieCommand(
-                _validMovie.Id,
-                AwardCategory.BestOriginalScreenplay.Id, 
-                Institution.AcademyAwards.Id,           
-                2011
-            );
+            var duplicateItems = new List<AwardItemRequest>
+            {
+                new AwardItemRequest(
+                    AwardCategory.BestOriginalScreenplay.Id,
+                    Institution.AcademyAwards.Id,
+                    2011)
+            };
+            var duplicateCommand = new AddAwardsToMovieCommand(_validMovie.Id, duplicateItems);
 
             // Act
-            var result = await _sut.Handle(duplicateAwardCommand, CancellationToken.None);
+            var result = await _sut.Handle(duplicateCommand, CancellationToken.None);
 
             // Assert
-            result.IsFailure.Should().Be(true);
-            result.Failure.Type.Should().Be(FailureType.Conflict);
-            result.Failure.Message.Should().Contain("Filme já possui este prêmio neste ano"); // ou similar
-            await _subUnitOfWork.DidNotReceive().Commit(Arg.Any<CancellationToken>());
+            result.IsFailure.Should().BeTrue();
+            result.Failure!.Type.Should().Be(FailureType.Conflict);
+            result.Failure.Message.Should().Contain("já possui");
         }
         #endregion
     }

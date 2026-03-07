@@ -41,8 +41,8 @@ namespace Domain.ValueObjects
         }
 
         public Guid Id { get; private set; }
-        public AwardCategory Category { get; private set; }
-        public Institution Institution { get; private set; }
+        public AwardCategory Category { get; private set; } = null!;
+        public Institution Institution { get; private set; } = null!;
         public int Year { get; private set; }
 
         protected override IEnumerable<object> GetEqualityComponents()

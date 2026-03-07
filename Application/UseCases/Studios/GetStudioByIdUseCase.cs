@@ -1,5 +1,4 @@
-﻿using Application.DTOs.Mappings;
-using Application.DTOs.Response.Studios;
+﻿using Application.DTOs.Response.Studios;
 using Application.Interfaces.Mediator;
 using Application.Queries.Studio;
 using Domain.Entities;

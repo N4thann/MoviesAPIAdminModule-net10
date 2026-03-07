@@ -8,7 +8,7 @@ namespace Domain.ValueObjects
 {
     public class Country : ValueObject
     {
-        public Country() { }
+        private Country() { }
 
         private Country(string name, string code) 
         {
@@ -37,8 +37,8 @@ namespace Domain.ValueObjects
             return Result<Country>.AsSuccess(country);
         }
 
-        public string Name { get; set; }
-        public string Code { get; set; }
+        public string Name { get; private set; } = null!;
+        public string Code { get; private set; } = null!;
 
         protected override IEnumerable<object> GetEqualityComponents()
         {
